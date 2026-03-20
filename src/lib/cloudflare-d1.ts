@@ -11,7 +11,8 @@ export class CloudflareD1Error extends Error {
 
 export async function queryD1<T = Record<string, unknown>>(
   sql: string,
-  params: (string | number | null)[] = []
+  params: (string | number | null)[] = [],
+  options?: { revalidate?: number | false }
 ): Promise<T[]> {
   if (!ACCOUNT_ID || !DATABASE_ID || !API_TOKEN) {
     throw new CloudflareD1Error(
@@ -21,15 +22,22 @@ export async function queryD1<T = Record<string, unknown>>(
 
   const url = `https://api.cloudflare.com/client/v4/accounts/${ACCOUNT_ID}/d1/database/${DATABASE_ID}/query`;
 
-  const res = await fetch(url, {
+  const fetchOptions: RequestInit & { next?: { revalidate: number } } = {
     method: "POST",
     headers: {
       Authorization: `Bearer ${API_TOKEN}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({ sql, params }),
-    next: { revalidate: 60 },
-  });
+  };
+
+  if (options?.revalidate === false) {
+    fetchOptions.cache = "no-store";
+  } else {
+    fetchOptions.next = { revalidate: options?.revalidate ?? 60 };
+  }
+
+  const res = await fetch(url, fetchOptions);
 
   if (!res.ok) {
     const text = await res.text();
