@@ -67,30 +67,16 @@ export default async function SubscriptionPlans() {
               md: `repeat(${Math.min(subscriptions.length || 3, 4)}, 1fr)`,
             },
             gap: 3,
-            alignItems: 'center',
-            pt: 3,
+            alignItems: 'start',
             overflow: 'visible',
           }}
         >
           {subscriptions.map((plan, index) => {
             const visual = planVisuals[index] ?? planVisuals[planVisuals.length - 1];
             return (
-              <Card
+              <Box
                 key={plan.id_subscription}
-                variant="outlined"
-                sx={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  position: 'relative',
-                  border: '1px solid',
-                  borderColor: visual.popular ? 'primary.main' : 'rgba(61,82,213,0.12)',
-                  boxShadow: visual.popular
-                    ? '0 8px 40px rgba(61,82,213,0.18)'
-                    : '0 2px 16px rgba(61,82,213,0.07)',
-                  transform: visual.popular ? { lg: 'scale(1.04)' } : 'none',
-                  transition: 'transform 0.25s, box-shadow 0.25s',
-                  '&:hover': { boxShadow: '0 12px 48px rgba(61,82,213,0.16)', transform: visual.popular ? { lg: 'scale(1.06)' } : 'translateY(-4px)' },
-                }}
+                sx={{ position: 'relative', pt: visual.popular ? '14px' : 0 }}
               >
                 {visual.popular && (
                   <Chip
@@ -100,15 +86,34 @@ export default async function SubscriptionPlans() {
                     size="small"
                     sx={{
                       position: 'absolute',
-                      top: -14,
+                      top: 0,
                       left: '50%',
                       transform: 'translateX(-50%)',
                       fontWeight: 800,
                       letterSpacing: '0.08em',
                       px: 1,
+                      zIndex: 1,
                     }}
                   />
                 )}
+                <Card
+                  variant="outlined"
+                  sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    position: 'relative',
+                    border: '2px solid',
+                    borderColor: visual.popular ? 'primary.main' : 'rgba(61,82,213,0.12)',
+                    boxShadow: visual.popular
+                      ? '0 8px 40px rgba(61,82,213,0.22)'
+                      : '0 2px 16px rgba(61,82,213,0.07)',
+                    transition: 'box-shadow 0.25s, transform 0.25s',
+                    '&:hover': {
+                      boxShadow: '0 12px 48px rgba(61,82,213,0.2)',
+                      transform: 'translateY(-4px)',
+                    },
+                  }}
+                >
 
                 <CardContent sx={{ p: 3.5, '&:last-child': { pb: 3.5 }, display: 'flex', flexDirection: 'column', height: '100%' }}>
                   <Box sx={{ textAlign: 'center', mb: 3 }}>
@@ -154,6 +159,7 @@ export default async function SubscriptionPlans() {
                   </Box>
                 </CardContent>
               </Card>
+            </Box>
             );
           })}
         </Box>
