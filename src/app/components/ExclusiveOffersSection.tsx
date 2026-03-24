@@ -98,16 +98,3 @@ export default async function ExclusiveOffersSection() {
     </Box>
   );
 }
-            {error}
-          </div>
-        )}
-
-        {!error && offers.length > 0 && <ExclusiveOffersClient offers={offers} />}
-
-        {!error && offers.length === 0 && (
-          <p className="text-center text-sm text-[color:var(--guander-muted)]">No hay promociones disponibles por ahora.</p>
-        )}
-      </div>
-    </section>
-  );
-}
