@@ -48,7 +48,7 @@ export default async function SubscriptionPlans() {
       component="section"
       sx={{ bgcolor: 'background.paper', py: { xs: 8, md: 12 }, width: '100%' }}
     >
-      <Container maxWidth="xl" sx={{ px: { xs: 3, sm: 4 } }}>
+      <Container maxWidth="xl" sx={{ px: { xs: 3, sm: 4 }, overflow: 'visible' }}>
         <Box sx={{ textAlign: 'center', mb: 8 }}>
           <Typography variant="h2" sx={{ fontSize: { xs: '1.875rem', sm: '2.5rem' }, mb: 1.5 }}>
             Planes de Suscripción
@@ -64,10 +64,12 @@ export default async function SubscriptionPlans() {
             gridTemplateColumns: {
               xs: '1fr',
               sm: 'repeat(2, 1fr)',
-              lg: `repeat(${Math.min(subscriptions.length || 3, 4)}, 1fr)`,
+              md: `repeat(${Math.min(subscriptions.length || 3, 4)}, 1fr)`,
             },
             gap: 3,
-            alignItems: 'start',
+            alignItems: 'center',
+            pt: 3,
+            overflow: 'visible',
           }}
         >
           {subscriptions.map((plan, index) => {
