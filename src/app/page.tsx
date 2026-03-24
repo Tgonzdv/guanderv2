@@ -1,5 +1,7 @@
 import HeroBanner from "./components/HeroBanner";
 import StatsBar from "./components/StatsBar";
+import LocationsFilterSection from "./components/LocationsFilterSection";
+import ExclusiveOffersSection from "./components/ExclusiveOffersSection";
 import StoresList from "./components/StoresList";
 import SubscriptionPlans from "./components/SubscriptionPlans";
 import DownloadsSection from "./components/DownloadsSection";
@@ -11,6 +13,8 @@ export default function Home() {
       <HeroBanner />
       <DownloadsSection />
       <StatsBar />
+      <LocationsFilterSection />
+      <ExclusiveOffersSection />
       <StoresList />
       <SubscriptionPlans />
       <Footer />
