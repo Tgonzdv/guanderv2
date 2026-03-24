@@ -1,5 +1,9 @@
 import { queryD1, CloudflareD1Error } from "@/lib/cloudflare-d1";
 import ExclusiveOffersClient, { type OfferCardItem } from "./ExclusiveOffersClient";
+import Box from '@mui/material/Box';
+import Container from '@mui/material/Container';
+import Typography from '@mui/material/Typography';
+import Alert from '@mui/material/Alert';
 
 interface BenefitRow {
   id?: number;
@@ -20,18 +24,15 @@ function toOfferItems(rows: BenefitRow[], source: "Profesional" | "Tienda"): Off
       const description = row.description?.trim();
       const percentage = typeof row.percentage === "number" ? row.percentage : null;
       const entityName = row.name?.trim() || row.title?.trim();
-
       const fallbackTitle =
         source === "Profesional"
           ? "Beneficio para servicios profesionales"
           : "Beneficio para tiendas";
-
       const id =
         row.id_benefit_prof ??
         row.id_benefit_store ??
         row.id ??
         (source === "Profesional" ? 10_000 + index : 20_000 + index);
-
       return {
         id,
         title:
@@ -41,7 +42,7 @@ function toOfferItems(rows: BenefitRow[], source: "Profesional" | "Tienda"): Off
         subtitle:
           description ||
           (source === "Profesional"
-            ? "Promocion disponible para duenios de mascotas."
+            ? "Promocion disponible para dueñios de mascotas."
             : "Oferta exclusiva en establecimientos aliados."),
         tag: source,
       };
@@ -54,19 +55,12 @@ async function loadOffersFromD1(): Promise<OfferCardItem[]> {
     queryD1<BenefitRow>("SELECT * FROM benefit_prof ORDER BY 1 DESC LIMIT 8"),
     queryD1<BenefitRow>("SELECT * FROM benefit_store ORDER BY 1 DESC LIMIT 8"),
   ]);
-
   const profRows = profResult.status === "fulfilled" ? profResult.value : [];
   const storeRows = storeResult.status === "fulfilled" ? storeResult.value : [];
-
   if (profRows.length === 0 && storeRows.length === 0) {
-    if (profResult.status === "rejected") {
-      throw profResult.reason;
-    }
-    if (storeResult.status === "rejected") {
-      throw storeResult.reason;
-    }
+    if (profResult.status === "rejected") throw profResult.reason;
+    if (storeResult.status === "rejected") throw storeResult.reason;
   }
-
   return [...toOfferItems(profRows, "Profesional"), ...toOfferItems(storeRows, "Tienda")].slice(0, 4);
 }
 
@@ -77,27 +71,33 @@ export default async function ExclusiveOffersSection() {
   try {
     offers = await loadOffersFromD1();
   } catch (e) {
-    if (e instanceof CloudflareD1Error) {
-      error = e.message;
-    } else {
-      error = "No se pudieron cargar las promociones.";
-    }
+    error = e instanceof CloudflareD1Error ? e.message : "No se pudieron cargar las promociones.";
   }
 
   return (
-    <section className="relative z-10 w-full bg-[color:var(--guander-cream)] px-6 pb-16">
-      <div className="max-w-6xl mx-auto">
-        <div className="flex flex-col items-center gap-3 text-center mb-8">
-          <h2 className="text-2xl sm:text-3xl font-black text-[color:var(--guander-ink)]">
+    <Box
+      component="section"
+      sx={{ bgcolor: '#f0f2fc', py: { xs: 7, md: 10 }, width: '100%' }}
+    >
+      <Container maxWidth="xl" sx={{ px: { xs: 3, sm: 4 } }}>
+        <Box sx={{ textAlign: 'center', mb: 6 }}>
+          <Typography variant="h2" sx={{ fontSize: { xs: '1.75rem', sm: '2.25rem' }, mb: 1.5 }}>
             Ofertas Exclusivas para Dueños
-          </h2>
-          <p className="text-sm text-[color:var(--guander-muted)] max-w-2xl">
-            Beneficios especiales para consentir a tu mascota mientras ahorras.
-          </p>
-        </div>
+          </Typography>
+          <Typography color="text.secondary" sx={{ maxWidth: 560, mx: 'auto' }}>
+            Beneficios especiales para consentir a tu mascota mientras ahorrás.
+          </Typography>
+        </Box>
 
-        {error && (
-          <div className="border border-red-300 bg-red-50 text-red-600 rounded-xl p-4 text-sm mb-6">
+        {error ? (
+          <Alert severity="error" sx={{ borderRadius: 3 }}>{error}</Alert>
+        ) : (
+          <ExclusiveOffersClient offers={offers} />
+        )}
+      </Container>
+    </Box>
+  );
+}
             {error}
           </div>
         )}

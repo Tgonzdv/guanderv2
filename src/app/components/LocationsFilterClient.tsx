@@ -1,6 +1,16 @@
 "use client";
 
 import { useState } from "react";
+import Box from '@mui/material/Box';
+import TextField from '@mui/material/TextField';
+import Chip from '@mui/material/Chip';
+import Card from '@mui/material/Card';
+import CardContent from '@mui/material/CardContent';
+import Typography from '@mui/material/Typography';
+import Button from '@mui/material/Button';
+import InputAdornment from '@mui/material/InputAdornment';
+import SearchIcon from '@mui/icons-material/Search';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
 
 export interface LocationItem {
   id: number;
@@ -15,41 +25,30 @@ interface LocationsFilterClientProps {
 }
 
 function normalizeText(value: string): string {
-  return value
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .trim();
+  return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
 }
 
 export default function LocationsFilterClient({ locations }: LocationsFilterClientProps) {
   const [activeCategory, setActiveCategory] = useState<string>("Todos");
   const [searchTerm, setSearchTerm] = useState<string>("");
 
-  const distinct = Array.from(new Set(locations.map((location) => location.category)));
+  const distinct = Array.from(new Set(locations.map((l) => l.category)));
   const categories = ["Todos", ...distinct];
 
-  const categoryCount = locations.reduce<Record<string, number>>((acc, location) => {
-    acc[location.category] = (acc[location.category] ?? 0) + 1;
+  const categoryCount = locations.reduce<Record<string, number>>((acc, l) => {
+    acc[l.category] = (acc[l.category] ?? 0) + 1;
     return acc;
   }, { Todos: locations.length });
 
   const normalizedTerm = normalizeText(searchTerm);
-  const filteredLocations = locations.filter((location) => {
-    const inCategory = activeCategory === "Todos" || location.category === activeCategory;
-
-    if (!inCategory) {
-      return false;
-    }
-
-    if (!normalizedTerm) {
-      return true;
-    }
-
+  const filteredLocations = locations.filter((l) => {
+    const inCategory = activeCategory === "Todos" || l.category === activeCategory;
+    if (!inCategory) return false;
+    if (!normalizedTerm) return true;
     return (
-      normalizeText(location.name).includes(normalizedTerm) ||
-      normalizeText(location.city).includes(normalizedTerm) ||
-      normalizeText(location.description).includes(normalizedTerm)
+      normalizeText(l.name).includes(normalizedTerm) ||
+      normalizeText(l.city).includes(normalizedTerm) ||
+      normalizeText(l.description).includes(normalizedTerm)
     );
   });
 
@@ -57,90 +56,133 @@ export default function LocationsFilterClient({ locations }: LocationsFilterClie
 
   return (
     <>
-      <div className="rounded-3xl border border-[color:var(--guander-border)] bg-[color:var(--guander-card)] p-4 sm:p-5 mb-6 pointer-events-auto">
-        <div className="flex flex-col gap-4 pointer-events-auto">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <h3 className="text-sm font-black uppercase tracking-[0.16em] text-[color:var(--guander-forest)]">
+      {/* Filter panel */}
+      <Card variant="outlined" sx={{ mb: 3, border: '1px solid', borderColor: 'rgba(61,82,213,0.12)' }}>
+        <CardContent sx={{ p: { xs: 2.5, sm: 3 }, '&:last-child': { pb: { xs: 2.5, sm: 3 } } }}>
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: { xs: 'column', sm: 'row' },
+              alignItems: { sm: 'center' },
+              justifyContent: 'space-between',
+              gap: 1,
+              mb: 2.5,
+            }}
+          >
+            <Typography variant="subtitle1" sx={{ color: 'primary.main', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', fontSize: '0.75rem' }}>
               Explora locales
-            </h3>
-            <div className="text-xs font-semibold text-[color:var(--guander-muted)]">
-              {filteredLocations.length} resultados
-            </div>
-          </div>
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              {filteredLocations.length} resultados · Filtro: {activeCategory}
+            </Typography>
+          </Box>
 
-          <p className="text-xs font-semibold text-[color:var(--guander-muted)]">
-            Filtro activo: {activeCategory}
-          </p>
-
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-3">
-            <label className="flex items-center pointer-events-auto">
-              <input
-                type="search"
-                value={searchTerm}
-                onChange={(event) => setSearchTerm(event.target.value)}
-                placeholder="Buscar por nombre, ciudad o descripcion"
-                className="w-full rounded-2xl border border-[color:var(--guander-border)] bg-white px-4 py-3 text-sm text-[color:var(--guander-ink)] placeholder:text-[#40564d] outline-none focus:border-[color:var(--guander-forest)] focus:ring-2 focus:ring-[color:var(--guander-mint)] pointer-events-auto"
-              />
-            </label>
-
-            <button
-              type="button"
-              disabled={!hasActiveFilters}
-              onClick={() => {
-                setActiveCategory("Todos");
-                setSearchTerm("");
+          <Box sx={{ display: 'flex', flexDirection: { xs: 'column', lg: 'row' }, gap: 1.5, mb: 2.5 }}>
+            <TextField
+              fullWidth
+              size="small"
+              placeholder="Buscar por nombre, ciudad o descripción"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon sx={{ fontSize: 18, color: 'text.secondary' }} />
+                  </InputAdornment>
+                ),
               }}
-              className="cursor-pointer rounded-2xl bg-[color:var(--guander-forest)] px-4 py-3 text-xs font-black uppercase tracking-[0.12em] text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed hover:-translate-y-0.5 pointer-events-auto"
+              sx={{ flex: 1 }}
+            />
+            <Button
+              variant="contained"
+              disabled={!hasActiveFilters}
+              onClick={() => { setActiveCategory("Todos"); setSearchTerm(""); }}
+              sx={{ whiteSpace: 'nowrap', px: 3, py: 1 }}
             >
               Limpiar filtros
-            </button>
-          </div>
+            </Button>
+          </Box>
 
-          <div className="flex items-center gap-2 flex-wrap pointer-events-auto">
-            {categories.map((category) => (
-              <button
-                key={category}
-                type="button"
-                onClick={() => setActiveCategory(category)}
-                aria-pressed={activeCategory === category}
-                className={`group cursor-pointer rounded-full border px-4 py-2 text-xs font-black uppercase tracking-[0.14em] transition-all hover:-translate-y-0.5 pointer-events-auto ${
-                  activeCategory === category
-                    ? "border-[color:var(--guander-forest)] bg-[color:var(--guander-forest)] text-white"
-                    : "border-[color:var(--guander-border)] bg-white text-[color:var(--guander-forest)]"
-                }`}
-              >
-                {category} ({categoryCount[category] ?? 0})
-              </button>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+            {categories.map((cat) => (
+              <Chip
+                key={cat}
+                label={`${cat} (${categoryCount[cat] ?? 0})`}
+                onClick={() => setActiveCategory(cat)}
+                color={activeCategory === cat ? 'primary' : 'default'}
+                variant={activeCategory === cat ? 'filled' : 'outlined'}
+                size="small"
+                sx={{ cursor: 'pointer' }}
+              />
             ))}
-          </div>
-        </div>
-      </div>
+          </Box>
+        </CardContent>
+      </Card>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+      {/* Grid */}
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)', lg: 'repeat(3, 1fr)' },
+          gap: 2.5,
+        }}
+      >
         {filteredLocations.map((location) => (
-          <article
+          <Card
             key={location.id}
-            className="group relative overflow-hidden rounded-2xl border border-[color:var(--guander-border)] bg-[color:var(--guander-card)] p-5 shadow-[0_8px_24px_rgba(23,58,45,0.08)] transition-all duration-300 hover:-translate-y-1"
+            variant="outlined"
+            sx={{
+              border: '1px solid',
+              borderColor: 'rgba(61,82,213,0.1)',
+              transition: 'transform 0.25s, box-shadow 0.25s',
+              '&:hover': {
+                transform: 'translateY(-4px)',
+                boxShadow: '0 8px 28px rgba(61,82,213,0.12)',
+              },
+            }}
           >
-            <div className="pointer-events-none absolute right-4 top-4 h-8 w-8 rounded-full bg-[color:var(--guander-mint)] opacity-50 transition-all duration-300 group-hover:scale-125" />
-            <div className="relative flex items-center justify-between gap-2 mb-3">
-              <h3 className="text-sm font-extrabold text-[color:var(--guander-ink)]">{location.name}</h3>
-              <span className="text-[10px] px-2.5 py-1 rounded-full bg-[color:var(--guander-mint)] text-[color:var(--guander-forest)] font-black uppercase tracking-wide">
-                {location.category}
-              </span>
-            </div>
-            <p className="text-xs text-[color:var(--guander-muted)] leading-relaxed mb-4 relative">{location.description}</p>
-            <p className="text-xs font-bold text-[color:var(--guander-forest)]">{location.city}</p>
-          </article>
+            <CardContent sx={{ p: 2.5, '&:last-child': { pb: 2.5 } }}>
+              <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 1, mb: 1.5 }}>
+                <Typography variant="subtitle1" sx={{ fontWeight: 700, fontSize: '0.9375rem', lineHeight: 1.3 }}>
+                  {location.name}
+                </Typography>
+                <Chip
+                  label={location.category}
+                  size="small"
+                  color="primary"
+                  variant="outlined"
+                  sx={{ flexShrink: 0 }}
+                />
+              </Box>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2, lineHeight: 1.6 }}>
+                {location.description}
+              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <LocationOnIcon sx={{ fontSize: 14, color: 'primary.main' }} />
+                <Typography variant="caption" color="primary.main" sx={{ fontWeight: 700 }}>
+                  {location.city}
+                </Typography>
+              </Box>
+            </CardContent>
+          </Card>
         ))}
-      </div>
+      </Box>
 
       {filteredLocations.length === 0 && (
-        <div className="mt-6 rounded-2xl border border-dashed border-[color:var(--guander-border)] p-8 text-center bg-[color:var(--guander-card)]">
-          <p className="text-sm font-semibold text-[color:var(--guander-muted)]">
-            No encontramos locales con esos filtros. Prueba otra categoria o termino de busqueda.
-          </p>
-        </div>
+        <Box
+          sx={{
+            mt: 3,
+            p: 5,
+            textAlign: 'center',
+            border: '2px dashed',
+            borderColor: 'rgba(61,82,213,0.15)',
+            borderRadius: 3,
+          }}
+        >
+          <Typography color="text.secondary">
+            No encontramos locales con esos filtros. Probá otra categoría o término de búsqueda.
+          </Typography>
+        </Box>
       )}
     </>
   );

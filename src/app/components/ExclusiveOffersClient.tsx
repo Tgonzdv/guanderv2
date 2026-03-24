@@ -1,6 +1,11 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Box from '@mui/material/Box';
+import Card from '@mui/material/Card';
+import CardContent from '@mui/material/CardContent';
+import Typography from '@mui/material/Typography';
+import Chip from '@mui/material/Chip';
 
 export interface OfferCardItem {
   id: number;
@@ -20,85 +25,120 @@ export default function ExclusiveOffersClient({ offers }: ExclusiveOffersClientP
   const [activeFilter, setActiveFilter] = useState<OfferFilter>("Todas");
 
   const filteredOffers = useMemo(() => {
-    if (activeFilter === "Todas") {
-      return offers;
-    }
-
-    return offers.filter((offer) => offer.tag === activeFilter);
+    if (activeFilter === "Todas") return offers;
+    return offers.filter((o) => o.tag === activeFilter);
   }, [activeFilter, offers]);
 
-  const counter = useMemo(() => {
-    return {
-      Todas: offers.length,
-      Profesional: offers.filter((offer) => offer.tag === "Profesional").length,
-      Tienda: offers.filter((offer) => offer.tag === "Tienda").length,
-    };
-  }, [offers]);
+  const counter = useMemo(() => ({
+    Todas: offers.length,
+    Profesional: offers.filter((o) => o.tag === "Profesional").length,
+    Tienda: offers.filter((o) => o.tag === "Tienda").length,
+  }), [offers]);
 
   return (
     <>
-      <div className="mb-7 rounded-3xl border border-[color:var(--guander-border)] bg-[color:var(--guander-card)] p-4 sm:p-5 pointer-events-auto">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <h3 className="text-sm font-black uppercase tracking-[0.16em] text-[color:var(--guander-forest)]">
-            Filtrar beneficios
-          </h3>
-          <p className="text-xs font-semibold text-[color:var(--guander-muted)]">
-            {filteredOffers.length} ofertas activas
-          </p>
-        </div>
-
-        <div className="mt-4 flex flex-wrap gap-2 pointer-events-auto">
-          {FILTERS.map((filter) => (
-            <button
-              key={filter}
-              type="button"
-              onClick={() => setActiveFilter(filter)}
-              aria-pressed={activeFilter === filter}
-              className={`cursor-pointer rounded-full border px-4 py-2 text-xs font-black uppercase tracking-[0.14em] transition-all hover:-translate-y-0.5 pointer-events-auto ${
-                activeFilter === filter
-                  ? "border-[color:var(--guander-forest)] bg-[color:var(--guander-forest)] text-white"
-                  : "border-[color:var(--guander-border)] bg-white text-[color:var(--guander-forest)]"
-              }`}
+      {/* Filter bar */}
+      <Card
+        variant="outlined"
+        sx={{ mb: 3, border: '1px solid', borderColor: 'rgba(61,82,213,0.12)' }}
+      >
+        <CardContent sx={{ p: { xs: 2.5, sm: 3 }, '&:last-child': { pb: { xs: 2.5, sm: 3 } } }}>
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: { xs: 'column', sm: 'row' },
+              alignItems: { sm: 'center' },
+              justifyContent: 'space-between',
+              gap: 1,
+              mb: 2,
+            }}
+          >
+            <Typography
+              variant="subtitle1"
+              sx={{ color: 'primary.main', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', fontSize: '0.75rem' }}
             >
-              {filter} ({counter[filter]})
-            </button>
-          ))}
-        </div>
-      </div>
+              Filtrar beneficios
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              {filteredOffers.length} ofertas activas
+            </Typography>
+          </Box>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+            {FILTERS.map((filter) => (
+              <Chip
+                key={filter}
+                label={`${filter} (${counter[filter]})`}
+                onClick={() => setActiveFilter(filter)}
+                color={activeFilter === filter ? 'primary' : 'default'}
+                variant={activeFilter === filter ? 'filled' : 'outlined'}
+                size="small"
+                sx={{ cursor: 'pointer' }}
+              />
+            ))}
+          </Box>
+        </CardContent>
+      </Card>
 
+      {/* Cards grid */}
       {filteredOffers.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', lg: 'repeat(4, 1fr)' },
+            gap: 2.5,
+          }}
+        >
           {filteredOffers.map((offer, index) => (
-            <article
+            <Card
               key={offer.id}
-              className="group relative overflow-hidden rounded-2xl border border-[color:var(--guander-border)] bg-[color:var(--guander-card)] p-5 shadow-[0_8px_24px_rgba(23,58,45,0.08)] transition-all duration-300 hover:-translate-y-1"
+              variant="outlined"
+              sx={{
+                border: '1px solid',
+                borderColor: 'rgba(61,82,213,0.1)',
+                bgcolor: 'background.paper',
+                transition: 'transform 0.25s, box-shadow 0.25s',
+                '&:hover': {
+                  transform: 'translateY(-4px)',
+                  boxShadow: '0 8px 28px rgba(61,82,213,0.12)',
+                },
+              }}
             >
-              <div className="pointer-events-none absolute -right-5 -top-5 h-16 w-16 rounded-full bg-[color:var(--guander-mint)] opacity-45 transition-transform duration-300 group-hover:scale-125" />
-
-              <div className="relative mb-4 flex items-center justify-between gap-2">
-                <span className="inline-flex text-[10px] px-2.5 py-1 rounded-full bg-[color:var(--guander-forest)] text-white font-black uppercase tracking-wide">
-                  {offer.tag}
-                </span>
-                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[color:var(--guander-sand)]">
-                  #{index + 1}
-                </span>
-              </div>
-
-              <h3 className="relative text-sm font-extrabold text-[color:var(--guander-ink)] mb-2 leading-snug">
-                {offer.title}
-              </h3>
-              <p className="relative text-xs text-[color:var(--guander-muted)] leading-relaxed">
-                {offer.subtitle}
-              </p>
-            </article>
+              <CardContent sx={{ p: 2.5, '&:last-child': { pb: 2.5 } }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+                  <Chip
+                    label={offer.tag}
+                    size="small"
+                    color="primary"
+                    sx={{ fontSize: '0.65rem' }}
+                  />
+                  <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700 }}>
+                    #{index + 1}
+                  </Typography>
+                </Box>
+                <Typography variant="subtitle2" sx={{ fontWeight: 800, mb: 1, lineHeight: 1.4 }}>
+                  {offer.title}
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.6 }}>
+                  {offer.subtitle}
+                </Typography>
+              </CardContent>
+            </Card>
           ))}
-        </div>
+        </Box>
       ) : (
-        <div className="rounded-2xl border border-dashed border-[color:var(--guander-border)] p-8 text-center bg-[color:var(--guander-card)]">
-          <p className="text-sm font-semibold text-[color:var(--guander-muted)]">
+        <Box
+          sx={{
+            p: 5,
+            textAlign: 'center',
+            border: '2px dashed',
+            borderColor: 'rgba(61,82,213,0.15)',
+            borderRadius: 3,
+          }}
+        >
+          <Typography color="text.secondary">
             No hay beneficios para este filtro en este momento.
-          </p>
-        </div>
+          </Typography>
+        </Box>
       )}
     </>
   );

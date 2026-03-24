@@ -1,5 +1,9 @@
 import { queryD1, CloudflareD1Error } from "@/lib/cloudflare-d1";
 import LocationsFilterClient, { type LocationItem } from "./LocationsFilterClient";
+import Box from '@mui/material/Box';
+import Container from '@mui/material/Container';
+import Typography from '@mui/material/Typography';
+import Alert from '@mui/material/Alert';
 
 interface StoreRow {
   id_store: number;
@@ -21,23 +25,10 @@ const CATEGORY_LABELS: Record<number, string> = {
 };
 
 function extractCityFromAddress(address: string | null): string | null {
-  if (!address) {
-    return null;
-  }
-
-  const parts = address
-    .split(",")
-    .map((part) => part.trim())
-    .filter(Boolean);
-
-  if (parts.length >= 3) {
-    return parts[parts.length - 2];
-  }
-
-  if (parts.length >= 2) {
-    return parts[parts.length - 1];
-  }
-
+  if (!address) return null;
+  const parts = address.split(",").map((p) => p.trim()).filter(Boolean);
+  if (parts.length >= 3) return parts[parts.length - 2];
+  if (parts.length >= 2) return parts[parts.length - 1];
   return null;
 }
 
@@ -49,7 +40,6 @@ export default async function LocationsFilterSection() {
     const stores = await queryD1<StoreRow>(
       "SELECT id_store, name, description, address, location, stars, fk_category FROM stores ORDER BY id_store ASC"
     );
-
     locations = stores.map((store) => ({
       id: store.id_store,
       name: store.name,
@@ -69,33 +59,31 @@ export default async function LocationsFilterSection() {
           : "Sin categoría",
     }));
   } catch (e) {
-    if (e instanceof CloudflareD1Error) {
-      error = e.message;
-    } else {
-      error = "No se pudieron cargar los locales.";
-    }
+    error = e instanceof CloudflareD1Error ? e.message : "No se pudieron cargar los locales.";
   }
 
   return (
-    <section id="tiendas" className="relative z-10 w-full bg-[color:var(--guander-cream)] py-14 px-6">
-      <div className="max-w-6xl mx-auto">
-        <div className="flex flex-col items-center gap-3 text-center mb-8">
-          <h2 className="text-2xl sm:text-3xl font-black text-[color:var(--guander-ink)]">
+    <Box
+      id="tiendas"
+      component="section"
+      sx={{ bgcolor: 'background.default', py: { xs: 7, md: 10 }, width: '100%' }}
+    >
+      <Container maxWidth="xl" sx={{ px: { xs: 3, sm: 4 } }}>
+        <Box sx={{ textAlign: 'center', mb: 6 }}>
+          <Typography variant="h2" sx={{ fontSize: { xs: '1.75rem', sm: '2.25rem' }, mb: 1.5 }}>
             Locales y Profesionales Adheridos
-          </h2>
-          <p className="text-sm text-[color:var(--guander-muted)] max-w-2xl">
+          </Typography>
+          <Typography color="text.secondary" sx={{ maxWidth: 560, mx: 'auto' }}>
             Filtra por categoría y encuentra rápidamente el lugar ideal para tu mascota.
-          </p>
-        </div>
+          </Typography>
+        </Box>
 
         {error ? (
-          <div className="border border-red-300 bg-red-50 text-red-600 rounded-xl p-4 text-sm">
-            {error}
-          </div>
+          <Alert severity="error" sx={{ borderRadius: 3 }}>{error}</Alert>
         ) : (
           <LocationsFilterClient locations={locations} />
         )}
-      </div>
-    </section>
+      </Container>
+    </Box>
   );
 }

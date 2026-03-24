@@ -1,6 +1,9 @@
 ﻿"use client";
 
 import { useEffect, useRef, useState } from "react";
+import Box from '@mui/material/Box';
+import Container from '@mui/material/Container';
+import Typography from '@mui/material/Typography';
 
 interface StatItem {
   value: number;
@@ -50,26 +53,50 @@ function AnimatedCounter({ value, suffix = "" }: { value: number; suffix?: strin
   }, [value]);
 
   return (
-    <span ref={ref} className="text-4xl font-black" style={{ color: "#43D696" }}>
-      {count}
-      {suffix}
-    </span>
+    <Typography
+      component="span"
+      ref={ref}
+      sx={{ fontSize: '2.5rem', fontWeight: 900, color: '#43D696', display: 'block', lineHeight: 1 }}
+    >
+      {count}{suffix}
+    </Typography>
   );
 }
 
 export default function StatsBar() {
   return (
-    <section className="w-full" style={{ background: "#1a1b3c" }}>
-      <div className="max-w-7xl mx-auto px-8 py-10 grid grid-cols-2 gap-y-8 sm:grid-cols-4">
-        {stats.map((stat) => (
-          <div key={stat.label} className="flex flex-col items-center gap-2">
-            <AnimatedCounter value={stat.value} suffix={stat.suffix} />
-            <span className="text-xs text-white/60 font-medium uppercase tracking-wider text-center">
-              {stat.label}
-            </span>
-          </div>
-        ))}
-      </div>
-    </section>
+    <Box component="section" sx={{ bgcolor: '#1a1b3c', width: '100%' }}>
+      <Container maxWidth="xl" sx={{ px: { xs: 3, sm: 4 }, py: 5 }}>
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: 'repeat(2, 1fr)', sm: 'repeat(4, 1fr)' },
+            gap: 3,
+          }}
+        >
+          {stats.map((stat) => (
+            <Box
+              key={stat.label}
+              sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}
+            >
+              <AnimatedCounter value={stat.value} suffix={stat.suffix} />
+              <Typography
+                variant="caption"
+                sx={{
+                  color: 'rgba(255,255,255,0.6)',
+                  fontWeight: 600,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.1em',
+                  textAlign: 'center',
+                  mt: 0.5,
+                }}
+              >
+                {stat.label}
+              </Typography>
+            </Box>
+          ))}
+        </Box>
+      </Container>
+    </Box>
   );
 }

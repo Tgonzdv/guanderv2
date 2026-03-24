@@ -1,4 +1,15 @@
-import { Shield, Star, Rocket, Zap, Info } from 'lucide-react';
+import Box from '@mui/material/Box';
+import Container from '@mui/material/Container';
+import Typography from '@mui/material/Typography';
+import Card from '@mui/material/Card';
+import CardContent from '@mui/material/CardContent';
+import Button from '@mui/material/Button';
+import Chip from '@mui/material/Chip';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+import ShieldIcon from '@mui/icons-material/Shield';
+import StarIcon from '@mui/icons-material/Star';
+import RocketLaunchIcon from '@mui/icons-material/RocketLaunch';
+import BoltIcon from '@mui/icons-material/Bolt';
 import { queryD1 } from '@/lib/cloudflare-d1';
 
 type Subscription = {
@@ -10,38 +21,11 @@ type Subscription = {
 };
 
 const planVisuals = [
-  {
-    icon: <Shield className="w-5 h-5" />,
-    buttonColor: 'bg-indigo-500 hover:bg-indigo-600',
-    textColor: 'text-indigo-500',
-    popular: false,
-  },
-  {
-    icon: <Star className="w-5 h-5" />,
-    buttonColor: 'bg-blue-500 hover:bg-blue-600',
-    textColor: 'text-blue-500',
-    popular: true,
-  },
-  {
-    icon: <Rocket className="w-5 h-5" />,
-    buttonColor: 'bg-violet-500 hover:bg-violet-600',
-    textColor: 'text-violet-500',
-    popular: false,
-  },
-  {
-    icon: <Zap className="w-5 h-5" />,
-    buttonColor: 'bg-fuchsia-500 hover:bg-fuchsia-600',
-    textColor: 'text-fuchsia-500',
-    popular: false,
-  },
+  { icon: <ShieldIcon />, color: '#3D52D5', popular: false },
+  { icon: <StarIcon />, color: '#3D52D5', popular: true },
+  { icon: <RocketLaunchIcon />, color: '#8B5CF6', popular: false },
+  { icon: <BoltIcon />, color: '#A855F7', popular: false },
 ] as const;
-
-const gridColsClass: Record<number, string> = {
-  1: 'lg:grid-cols-1',
-  2: 'lg:grid-cols-2',
-  3: 'lg:grid-cols-3',
-  4: 'lg:grid-cols-4',
-};
 
 function formatAmount(amount: number): string {
   return `$${amount.toLocaleString('es-AR')}`;
@@ -58,77 +42,143 @@ export default async function SubscriptionPlans() {
     console.error('Error fetching subscriptions:', error);
   }
 
-  const colsClass = gridColsClass[Math.min(subscriptions.length, 4)] ?? 'lg:grid-cols-3';
-
   return (
-    <section id="planes" className="w-full bg-[#f8fafc] py-24 sm:py-32 relative overflow-hidden">
-      {/* Background gradients for premium feel */}
-      <div className="absolute top-0 inset-x-0 h-[500px] bg-gradient-to-b from-indigo-50/50 to-transparent pointer-events-none" />
-
-      <div className="max-w-7xl mx-auto px-6 relative z-10">
-        <div className="text-center max-w-3xl mx-auto mb-16">
-          <h2 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tight mb-4">
+    <Box
+      id="planes"
+      component="section"
+      sx={{ bgcolor: 'background.paper', py: { xs: 8, md: 12 }, width: '100%' }}
+    >
+      <Container maxWidth="xl" sx={{ px: { xs: 3, sm: 4 } }}>
+        <Box sx={{ textAlign: 'center', mb: 8 }}>
+          <Typography variant="h2" sx={{ fontSize: { xs: '1.875rem', sm: '2.5rem' }, mb: 1.5 }}>
             Planes de Suscripción
-          </h2>
-          <p className="text-slate-500 text-lg md:text-xl">
+          </Typography>
+          <Typography color="text.secondary" sx={{ fontSize: '1.0625rem' }}>
             ¡Elegí el plan que mejor se adapte a vos!
-          </p>
-        </div>
+          </Typography>
+        </Box>
 
-        <div className={`grid grid-cols-1 sm:grid-cols-2 ${colsClass} gap-6 lg:gap-8 max-w-[1400px] mx-auto`}>
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: {
+              xs: '1fr',
+              sm: 'repeat(2, 1fr)',
+              lg: `repeat(${Math.min(subscriptions.length || 3, 4)}, 1fr)`,
+            },
+            gap: 3,
+            alignItems: 'start',
+          }}
+        >
           {subscriptions.map((plan, index) => {
             const visual = planVisuals[index] ?? planVisuals[planVisuals.length - 1];
             return (
-              <div
+              <Card
                 key={plan.id_subscription}
-                className={`flex flex-col h-full relative bg-white rounded-3xl p-8 transition-all duration-300 hover:-translate-y-2 ${
-                  visual.popular
-                    ? 'border-2 border-blue-500 shadow-xl shadow-blue-500/10 z-10 scale-100 lg:scale-105'
-                    : 'border border-slate-100 shadow-lg hover:shadow-xl'
-                }`}
+                variant="outlined"
+                sx={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  position: 'relative',
+                  border: '1px solid',
+                  borderColor: visual.popular ? 'primary.main' : 'rgba(61,82,213,0.12)',
+                  boxShadow: visual.popular
+                    ? '0 8px 40px rgba(61,82,213,0.18)'
+                    : '0 2px 16px rgba(61,82,213,0.07)',
+                  transform: visual.popular ? { lg: 'scale(1.04)' } : 'none',
+                  transition: 'transform 0.25s, box-shadow 0.25s',
+                  '&:hover': { boxShadow: '0 12px 48px rgba(61,82,213,0.16)', transform: visual.popular ? { lg: 'scale(1.06)' } : 'translateY(-4px)' },
+                }}
               >
                 {visual.popular && (
-                  <div className="absolute -top-4 inset-x-0 flex justify-center drop-shadow-md">
-                    <span className="bg-blue-500 text-white text-xs font-bold px-4 py-1.5 rounded-full uppercase tracking-wider flex items-center gap-1">
-                      <Star className="w-3.5 h-3.5 fill-white" />
-                      MÁS POPULAR
-                    </span>
-                  </div>
+                  <Chip
+                    icon={<StarIcon sx={{ fontSize: '14px !important' }} />}
+                    label="MÁS POPULAR"
+                    color="primary"
+                    size="small"
+                    sx={{
+                      position: 'absolute',
+                      top: -14,
+                      left: '50%',
+                      transform: 'translateX(-50%)',
+                      fontWeight: 800,
+                      letterSpacing: '0.08em',
+                      px: 1,
+                    }}
+                  />
                 )}
 
-                <div className="text-center mb-8 flex-shrink-0">
-                  <h3 className="text-xl font-bold text-slate-900 mb-4">{plan.name}</h3>
-                  <div className="flex items-baseline justify-center gap-1 text-slate-900">
-                    <span className={`text-4xl lg:text-5xl font-black tracking-tighter ${visual.textColor}`}>
-                      {formatAmount(plan.amount)}
-                    </span>
-                    <span className="text-slate-500 font-medium">/mes</span>
-                  </div>
-                  <p className="text-sm text-slate-500 mt-4 italic min-h-[40px]">
-                    {plan.description}
-                  </p>
-                </div>
+                <CardContent sx={{ p: 3.5, '&:last-child': { pb: 3.5 }, display: 'flex', flexDirection: 'column', height: '100%' }}>
+                  <Box sx={{ textAlign: 'center', mb: 3 }}>
+                    <Typography
+                      variant="h5"
+                      sx={{ fontWeight: 800, mb: 2, color: 'text.primary' }}
+                    >
+                      {plan.name}
+                    </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: 0.5 }}>
+                      <Typography
+                        sx={{ fontSize: { xs: '2.25rem', lg: '2.75rem' }, fontWeight: 900, color: visual.color, lineHeight: 1 }}
+                      >
+                        {formatAmount(plan.amount)}
+                      </Typography>
+                      <Typography color="text.secondary" sx={{ fontWeight: 500 }}>/mes</Typography>
+                    </Box>
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      sx={{ mt: 2, fontStyle: 'italic', minHeight: 40, lineHeight: 1.6 }}
+                    >
+                      {plan.description}
+                    </Typography>
+                  </Box>
 
-                <div className="mt-auto pt-6 border-t border-slate-100 flex-shrink-0">
-                  <button
-                    className={`w-full py-4 px-6 rounded-2xl text-white font-bold transition-all flex items-center justify-center gap-2 ${visual.buttonColor} shadow-md shadow-current/20 hover:shadow-lg`}
-                  >
-                    {visual.icon}
-                    Elegir {plan.name}
-                  </button>
-                </div>
-              </div>
+                  <Box sx={{ mt: 'auto', pt: 2, borderTop: '1px solid', borderColor: 'rgba(61,82,213,0.08)' }}>
+                    <Button
+                      variant={visual.popular ? 'contained' : 'outlined'}
+                      fullWidth
+                      size="large"
+                      startIcon={visual.icon}
+                      sx={{
+                        ...(visual.popular
+                          ? {}
+                          : { borderColor: visual.color, color: visual.color, '&:hover': { borderColor: visual.color, bgcolor: `${visual.color}0a` } }),
+                        bgcolor: visual.popular ? visual.color : undefined,
+                        '&:hover': visual.popular ? { bgcolor: visual.color, opacity: 0.9 } : undefined,
+                      }}
+                    >
+                      Elegir {plan.name}
+                    </Button>
+                  </Box>
+                </CardContent>
+              </Card>
             );
           })}
-        </div>
+        </Box>
 
-        <div className="mt-16 text-center">
-          <p className="inline-flex items-center gap-2 text-sm text-slate-500 bg-white px-6 py-3 rounded-full shadow-sm border border-slate-100">
-            <Info className="w-4 h-4 text-amber-500" />
-            Todos los planes incluyen 30 días de prueba gratis. Cancelá cuando quieras sin penalidades.
-          </p>
-        </div>
-      </div>
-    </section>
+        <Box sx={{ mt: 8, display: 'flex', justifyContent: 'center' }}>
+          <Box
+            sx={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 1,
+              bgcolor: 'background.paper',
+              border: '1px solid',
+              borderColor: 'rgba(61,82,213,0.12)',
+              borderRadius: '50px',
+              px: 3,
+              py: 1.5,
+              boxShadow: '0 2px 12px rgba(61,82,213,0.06)',
+            }}
+          >
+            <InfoOutlinedIcon sx={{ color: 'warning.main', fontSize: 18 }} />
+            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
+              Todos los planes incluyen 30 días de prueba gratis. Cancelá cuando quieras sin penalidades.
+            </Typography>
+          </Box>
+        </Box>
+      </Container>
+    </Box>
   );
 }
+
