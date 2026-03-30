@@ -60,6 +60,8 @@ export default function LoginPage() {
         router.push("/dashboard/customer");
       } else if (userRole === "professional") {
         router.push("/dashboard/professional");
+      } else if (userRole === "store_owner") {
+        router.push("/dashboard/customer");
       } else {
         setError("Rol no válido. Intenta de nuevo.");
       }
