@@ -1,11 +1,14 @@
 import bcryptjs from "bcryptjs";
 import jwt from "jsonwebtoken";
 
-if (!process.env.JWT_SECRET) {
-  throw new Error("JWT_SECRET environment variable is not defined");
+function getJwtSecret(): string {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    throw new Error("JWT_SECRET environment variable is not defined");
+  }
+  return secret;
 }
 
-const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_EXPIRATION = "7d";
 
 /**
@@ -34,7 +37,7 @@ export function generateToken(payload: {
   email: string;
   role: string;
 }): string {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRATION });
+  return jwt.sign(payload, getJwtSecret(), { expiresIn: JWT_EXPIRATION });
 }
 
 /**
@@ -46,7 +49,7 @@ export function verifyToken(token: string): {
   role: string;
 } | null {
   try {
-    return jwt.verify(token, JWT_SECRET) as {
+    return jwt.verify(token, getJwtSecret()) as {
       id: number;
       email: string;
       role: string;
