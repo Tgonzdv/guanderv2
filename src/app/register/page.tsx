@@ -82,13 +82,13 @@ export default function Register() {
       const userRole = data.user?.role;
 
       if (userRole === "admin") {
-        router.push("/dashboard/admin");
+        window.location.href = "/dashboard/admin";
       } else if (userRole === "customer") {
-        router.push("/dashboard/customer");
+        window.location.href = "/dashboard/customer";
       } else if (userRole === "professional") {
-        router.push("/dashboard/professional");
+        window.location.href = "/dashboard/professional";
       } else if (userRole === "store_owner") {
-        router.push("/dashboard/customer");
+        window.location.href = "/dashboard/customer";
       } else {
         setError("Rol no válido. Intenta de nuevo.");
       }
