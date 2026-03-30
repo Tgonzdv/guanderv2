@@ -87,6 +87,8 @@ export default function Register() {
         router.push("/dashboard/customer");
       } else if (userRole === "professional") {
         router.push("/dashboard/professional");
+      } else if (userRole === "store_owner") {
+        router.push("/dashboard/customer");
       } else {
         setError("Rol no válido. Intenta de nuevo.");
       }
@@ -271,8 +273,9 @@ export default function Register() {
                 onChange={(e) => setRole(e.target.value)}
                 className="w-full appearance-none rounded-lg border-2 border-gray-200 px-4 py-3 text-gray-900 focus:border-emerald-500 focus:outline-none transition-colors duration-200 text-sm hover:border-gray-300 bg-white"
               >
-                <option value="customer">Cliente / Tienda</option>
+                <option value="customer">Cliente</option>
                 <option value="professional">Profesional</option>
+                <option value="store_owner">Local / Tienda</option>
               </select>
             </div>
 

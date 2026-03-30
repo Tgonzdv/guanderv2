@@ -7,7 +7,7 @@ interface RoleRow {
   rol: string;
 }
 
-const ALLOWED_REGISTER_ROLES = ["customer", "professional"];
+const ALLOWED_REGISTER_ROLES = ["customer", "professional", "store_owner"];
 
 export async function POST(request: NextRequest) {
   try {
@@ -122,6 +122,14 @@ export async function POST(request: NextRequest) {
     }
 
     const newUserId = newUsers[0].id_user;
+
+    // If customer, create customer record with 0 points
+    if (role === "customer") {
+      await queryD1(
+        "INSERT INTO customer (points, fk_user) VALUES (0, ?)",
+        [newUserId || 0],
+      );
+    }
 
     // Generate token
     const token = generateToken({
