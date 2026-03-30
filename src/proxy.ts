@@ -7,17 +7,11 @@ const protectedRoutes = ['/dashboard']
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
 
-  if (pathname === '/admin/login' || pathname.startsWith('/api/')) {
+  if (pathname.startsWith('/api/')) {
     return NextResponse.next()
   }
 
-  // Admin auth check
-  const adminSession = request.cookies.get('admin_session')
-  if (pathname.startsWith('/admin') && !adminSession) {
-    return NextResponse.redirect(new URL('/admin/login', request.url))
-  }
-
-  // Dashboard auth check (from middleware.ts)
+  // Dashboard auth check
   const token = request.cookies.get('token')?.value
   const isProtected = protectedRoutes.some((route) => pathname.startsWith(route))
   if (isProtected && !token) {
@@ -28,5 +22,5 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/admin/:path*', '/dashboard/:path*'],
+  matcher: ['/dashboard/:path*'],
 }
