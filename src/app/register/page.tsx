@@ -88,7 +88,7 @@ export default function Register() {
       } else if (userRole === "professional") {
         window.location.href = "/dashboard/professional";
       } else if (userRole === "store_owner") {
-        window.location.href = "/dashboard/customer";
+        window.location.href = "/dashboard/store";
       } else {
         setError("Rol no válido. Intenta de nuevo.");
       }

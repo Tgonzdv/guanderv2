@@ -1,7 +1,7 @@
 ﻿import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
-// Protected routes (from middleware.ts)
+// Protected routes
 const protectedRoutes = ['/dashboard']
 
 export function proxy(request: NextRequest) {
