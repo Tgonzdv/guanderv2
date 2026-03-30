@@ -7,7 +7,7 @@ interface RoleRow {
   rol: string;
 }
 
-const ALLOWED_REGISTER_ROLES = ["customer", "professional", "store_owner"];
+const ALLOWED_REGISTER_ROLES = ["professional", "store_owner"];
 
 export async function POST(request: NextRequest) {
   try {

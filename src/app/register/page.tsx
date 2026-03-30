@@ -9,7 +9,7 @@ export default function Register() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [role, setRole] = useState("customer");
+  const [role, setRole] = useState("professional");
   const [name, setName] = useState("");
   const [lastName, setLastName] = useState("");
   const [tel, setTel] = useState("");
@@ -273,7 +273,6 @@ export default function Register() {
                 onChange={(e) => setRole(e.target.value)}
                 className="w-full appearance-none rounded-lg border-2 border-gray-200 px-4 py-3 text-gray-900 focus:border-emerald-500 focus:outline-none transition-colors duration-200 text-sm hover:border-gray-300 bg-white"
               >
-                <option value="customer">Cliente</option>
                 <option value="professional">Profesional</option>
                 <option value="store_owner">Local / Tienda</option>
               </select>
