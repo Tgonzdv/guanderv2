@@ -9,7 +9,7 @@ export default function HeroBanner() {
   return (
     <Box
       component="section"
-      sx={{ position: 'relative', overflow: 'hidden' }}
+      sx={{ position: 'relative', overflow: 'hidden', minHeight: { xs: '100svh', md: '92vh' }, display: 'flex', flexDirection: 'column' }}
     >
       {/* Background video */}
       <Box
@@ -33,7 +33,7 @@ export default function HeroBanner() {
         sx={{
           position: 'absolute',
           inset: 0,
-          background: 'linear-gradient(135deg, rgba(61,82,213,0.72) 0%, rgba(74,159,212,0.60) 55%, rgba(67,216,176,0.55) 100%)',
+          background: 'linear-gradient(135deg, rgba(30,45,160,0.82) 0%, rgba(40,120,190,0.72) 55%, rgba(30,160,130,0.68) 100%)',
           zIndex: 1,
         }}
       />
