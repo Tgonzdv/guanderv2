@@ -1,15 +1,5 @@
-import HeroBanner from "./components/HeroBanner";
-import StatsBar from "./components/StatsBar";
-import LocationsFilterSection from "./components/LocationsFilterSection";
-import ExclusiveOffersSection from "./components/ExclusiveOffersSection";
+import HomeLandingScreen from "./HomeLandingScreen";
 
 export default function Home() {
-  return (
-    <main className="flex flex-col w-full">
-      <HeroBanner />
-      <StatsBar />
-      <LocationsFilterSection />
-      <ExclusiveOffersSection />
-    </main>
-  );
+  return <HomeLandingScreen />;
 }
