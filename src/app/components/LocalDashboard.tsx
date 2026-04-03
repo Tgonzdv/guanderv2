@@ -1,4 +1,7 @@
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import { CloudflareD1Error, queryD1 } from "@/lib/cloudflare-d1";
+import { verifyToken } from "@/lib/auth";
 import LocalDashboardClient from "../dashboard/store/LocalDashboardClient";
 import type {
   BenefitRow,
@@ -14,7 +17,7 @@ import type {
 
 type NumberRow = { value: number | null };
 
-async function loadDashboardData(): Promise<DashboardData | null> {
+async function loadDashboardData(userId: number): Promise<DashboardData | null> {
   const stores = await queryD1<StoreSummaryRow>(
     `SELECT
       s.id_store,
@@ -35,8 +38,9 @@ async function loadDashboardData(): Promise<DashboardData | null> {
     LEFT JOIN category c ON c.id_category = s.fk_category
     LEFT JOIN store_sub ss ON ss.id_store_sub = s.fk_store_sub_id
     LEFT JOIN subscription sub ON sub.id_subscription = ss.fk_subscription_id
-    ORDER BY s.id_store ASC
-    LIMIT 1`
+    WHERE s.fk_user = ?
+    LIMIT 1`,
+    [userId]
   );
 
   const store = stores[0];
@@ -235,11 +239,19 @@ async function loadDashboardData(): Promise<DashboardData | null> {
 }
 
 export default async function LocalDashboard() {
+  const cookieStore = await cookies();
+  const token = cookieStore.get("token")?.value;
+  const user = token ? verifyToken(token) : null;
+
+  if (!user || user.role !== "store_owner") {
+    redirect("/login");
+  }
+
   let data: DashboardData | null = null;
   let error: string | null = null;
 
   try {
-    data = await loadDashboardData();
+    data = await loadDashboardData(user.id);
   } catch (err) {
     error = err instanceof CloudflareD1Error ? err.message : "No se pudo cargar el dashboard.";
   }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   AppBar,
   Avatar,
@@ -36,6 +37,7 @@ import ConfirmationNumberRoundedIcon from "@mui/icons-material/ConfirmationNumbe
 import ReviewsRoundedIcon from "@mui/icons-material/ReviewsRounded";
 import NotificationsActiveRoundedIcon from "@mui/icons-material/NotificationsActiveRounded";
 import MonetizationOnRoundedIcon from "@mui/icons-material/MonetizationOnRounded";
+import LogoutRoundedIcon from "@mui/icons-material/LogoutRounded";
 import StarRoundedIcon from "@mui/icons-material/StarRounded";
 import { ThemeProvider, alpha, createTheme } from "@mui/material/styles";
 import type { DashboardData } from "./types";
@@ -613,8 +615,16 @@ function SidebarContent({
   selected: DashboardSection;
   onSelect: (value: DashboardSection) => void;
 }) {
+  const router = useRouter();
+
+  function handleLogout() {
+    localStorage.removeItem("user");
+    localStorage.removeItem("token");
+    router.push("/login");
+  }
+
   return (
-    <Box sx={{ height: "100%", px: 1.2, py: 1 }}>
+    <Box sx={{ height: "100%", px: 1.2, py: 1, display: "flex", flexDirection: "column" }}>
       <Paper
         elevation={0}
         sx={{
@@ -633,7 +643,7 @@ function SidebarContent({
         </Typography>
       </Paper>
 
-      <List sx={{ mt: 1 }}>
+      <List sx={{ mt: 1, flexGrow: 1 }}>
         {navItems.map((item) => {
           const active = selected === item.id;
           return (
@@ -656,8 +666,17 @@ function SidebarContent({
       </List>
 
       <Divider sx={{ my: 1.5 }} />
-      <Button fullWidth variant="contained" startIcon={<MonetizationOnRoundedIcon />} sx={{ bgcolor: "#1f4b3b" }}>
+      <Button fullWidth variant="contained" startIcon={<MonetizationOnRoundedIcon />} sx={{ bgcolor: "#1f4b3b", mb: 1 }}>
         Upgrade Plan
+      </Button>
+      <Button
+        fullWidth
+        variant="outlined"
+        startIcon={<LogoutRoundedIcon />}
+        onClick={handleLogout}
+        sx={{ color: "#1f4b3b", borderColor: "#1f4b3b" }}
+      >
+        Cerrar Sesión
       </Button>
     </Box>
   );
