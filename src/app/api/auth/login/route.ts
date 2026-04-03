@@ -12,7 +12,7 @@ interface UserRow {
   last_name?: string;
 }
 
-const ALLOWED_ROLES = ["admin", "customer", "professional", "store_owner"];
+const ALLOWED_ROLES = ["admin", "professional", "store_owner"];
 
 export async function POST(request: NextRequest) {
   try {

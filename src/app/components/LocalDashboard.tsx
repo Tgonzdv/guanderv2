@@ -1,5 +1,5 @@
 import { CloudflareD1Error, queryD1 } from "@/lib/cloudflare-d1";
-import LocalDashboardClient from "../dashboard/customer/LocalDashboardClient";
+import LocalDashboardClient from "../dashboard/store/LocalDashboardClient";
 import type {
   BenefitRow,
   CouponConsumptionRow,
@@ -10,7 +10,7 @@ import type {
   ReviewRow,
   ServiceRow,
   StoreSummaryRow,
-} from "../dashboard/customer/types";
+} from "../dashboard/store/types";
 
 type NumberRow = { value: number | null };
 
