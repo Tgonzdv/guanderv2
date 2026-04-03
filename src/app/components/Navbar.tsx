@@ -17,7 +17,7 @@ const navLinks = [
   { label: "Tiendas", href: "#tiendas" },
   { label: "Planes", href: "#planes" },
   { label: "Contacto", href: "#contacto" },
-  { label: "Dashboard Local", href: "/local/dashboard" },
+  { label: "Dashboard Local", href: "/dashboard/store" },
 ];
 
 export default function Navbar() {
