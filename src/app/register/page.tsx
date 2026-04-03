@@ -106,31 +106,93 @@ export default function Register() {
   }
 
   return (
-    <div className="flex h-screen w-screen items-center justify-center bg-gradient-to-br from-emerald-50 to-emerald-100">
-      <div className="w-full max-w-md px-6">
-        {/* Tarjeta del Formulario */}
-        <div className="bg-white rounded-xl shadow-lg p-8">
-          {/* Encabezado Verde */}
-          <div className="bg-emerald-50 border-2 border-emerald-400 rounded-lg p-4 mb-8 text-center">
-            <p className="text-emerald-900 font-semibold text-base">
-              Registro de Local/Profesional
-            </p>
+    <div className="flex min-h-screen w-full overflow-x-hidden bg-white">
+      {/* COLUMNA IZQUIERDA */}
+      <div className="hidden lg:flex lg:w-5/12 bg-gradient-to-b from-emerald-900 to-emerald-950 text-white flex-col justify-between p-12 shrink-0">
+        <div>
+          <Link href="/" className="flex items-center gap-2 mb-10">
+            <span className="text-3xl font-black text-emerald-400">✶</span>
+            <span className="text-2xl font-black tracking-tight">Guander</span>
+          </Link>
+          <h1 className="text-4xl font-bold mb-4 leading-tight">
+            Únete a la plataforma
+          </h1>
+          <p className="text-emerald-100 text-sm leading-relaxed mb-4">
+            Registra tu local o perfil profesional y comenzá a gestionar servicios, cupones y suscripciones desde un solo lugar.
+          </p>
+          <div className="flex flex-col gap-3 mt-8">
+            {[
+              { icon: "🏪", text: "Gestión de locales y servicios" },
+              { icon: "🎟️", text: "Cupones y promociones propias" },
+              { icon: "📊", text: "Estadísticas en tiempo real" },
+              { icon: "💳", text: "Planes de suscripción flexibles" },
+            ].map(({ icon, text }) => (
+              <div key={text} className="flex items-center gap-3">
+                <span className="text-xl">{icon}</span>
+                <span className="text-emerald-100 text-sm">{text}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        <p className="text-emerald-400 text-xs">© 2026 Guander — Todos los derechos reservados</p>
+      </div>
+
+      {/* COLUMNA DERECHA */}
+      <div className="flex flex-1 flex-col justify-center items-center px-6 py-12 min-w-0">
+        {/* Logo mobile */}
+        <Link href="/" className="flex items-center gap-2 mb-8 lg:hidden">
+          <span className="text-2xl font-black text-emerald-600">✶</span>
+          <span className="text-xl font-black tracking-tight text-gray-900">Guander</span>
+        </Link>
+
+        <div className="w-full max-w-lg">
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold text-gray-900">Crear cuenta</h2>
+            <p className="text-gray-500 text-sm mt-1">Completa los datos para comenzar</p>
           </div>
 
-          {/* Mostrar errores */}
           {error && (
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
-              <p className="font-semibold text-sm">{error}</p>
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6 text-sm">
+              {error}
             </div>
           )}
 
-          {/* Formulario */}
-          <form onSubmit={handleRegister} className="flex flex-col space-y-5">
+          <form onSubmit={handleRegister} className="flex flex-col gap-4">
+            {/* Nombre y Apellido */}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label htmlFor="name" className="block text-xs font-semibold text-gray-600 mb-1.5">
+                  Nombre
+                </label>
+                <input
+                  id="name"
+                  name="name"
+                  type="text"
+                  placeholder="Tu nombre"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="w-full rounded-lg border border-gray-200 px-3.5 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-100 transition-all"
+                />
+              </div>
+              <div>
+                <label htmlFor="lastName" className="block text-xs font-semibold text-gray-600 mb-1.5">
+                  Apellido
+                </label>
+                <input
+                  id="lastName"
+                  name="lastName"
+                  type="text"
+                  placeholder="Tu apellido"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  className="w-full rounded-lg border border-gray-200 px-3.5 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-100 transition-all"
+                />
+              </div>
+            </div>
+
+            {/* Email */}
             <div>
-              <label
-                htmlFor="email"
-                className="block text-xs text-gray-600 mb-2 font-medium"
-              >
+              <label htmlFor="email" className="block text-xs font-semibold text-gray-600 mb-1.5">
                 Email
               </label>
               <input
@@ -141,91 +203,14 @@ export default function Register() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="w-full appearance-none rounded-lg border-2 border-gray-200 px-4 py-3 placeholder-gray-400 text-gray-900 focus:border-emerald-500 focus:outline-none transition-colors duration-200 text-sm hover:border-gray-300"
+                className="w-full rounded-lg border border-gray-200 px-3.5 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-100 transition-all"
               />
             </div>
 
-            <div>
-              <label
-                htmlFor="password"
-                className="block text-xs text-gray-600 mb-2 font-medium"
-              >
-                Contraseña
-              </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="w-full appearance-none rounded-lg border-2 border-gray-200 px-4 py-3 placeholder-gray-400 text-gray-900 focus:border-emerald-500 focus:outline-none transition-colors duration-200 text-sm hover:border-gray-300"
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="confirmPassword"
-                className="block text-xs text-gray-600 mb-2 font-medium"
-              >
-                Confirmar Contraseña
-              </label>
-              <input
-                id="confirmPassword"
-                name="confirmPassword"
-                type="password"
-                placeholder="••••••••"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                required
-                className="w-full appearance-none rounded-lg border-2 border-gray-200 px-4 py-3 placeholder-gray-400 text-gray-900 focus:border-emerald-500 focus:outline-none transition-colors duration-200 text-sm hover:border-gray-300"
-              />
-            </div>
-
+            {/* Tel y Dirección */}
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label
-                  htmlFor="name"
-                  className="block text-xs text-gray-600 mb-2 font-medium"
-                >
-                  Nombre
-                </label>
-                <input
-                  id="name"
-                  name="name"
-                  type="text"
-                  placeholder="Tu nombre"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="w-full appearance-none rounded-lg border-2 border-gray-200 px-4 py-3 placeholder-gray-400 text-gray-900 focus:border-emerald-500 focus:outline-none transition-colors duration-200 text-sm hover:border-gray-300"
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="lastName"
-                  className="block text-xs text-gray-600 mb-2 font-medium"
-                >
-                  Apellido
-                </label>
-                <input
-                  id="lastName"
-                  name="lastName"
-                  type="text"
-                  placeholder="Tu apellido"
-                  value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
-                  className="w-full appearance-none rounded-lg border-2 border-gray-200 px-4 py-3 placeholder-gray-400 text-gray-900 focus:border-emerald-500 focus:outline-none transition-colors duration-200 text-sm hover:border-gray-300"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label
-                  htmlFor="tel"
-                  className="block text-xs text-gray-600 mb-2 font-medium"
-                >
+                <label htmlFor="tel" className="block text-xs font-semibold text-gray-600 mb-1.5">
                   Teléfono
                 </label>
                 <input
@@ -235,14 +220,11 @@ export default function Register() {
                   placeholder="+54..."
                   value={tel}
                   onChange={(e) => setTel(e.target.value)}
-                  className="w-full appearance-none rounded-lg border-2 border-gray-200 px-4 py-3 placeholder-gray-400 text-gray-900 focus:border-emerald-500 focus:outline-none transition-colors duration-200 text-sm hover:border-gray-300"
+                  className="w-full rounded-lg border border-gray-200 px-3.5 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-100 transition-all"
                 />
               </div>
               <div>
-                <label
-                  htmlFor="address"
-                  className="block text-xs text-gray-600 mb-2 font-medium"
-                >
+                <label htmlFor="address" className="block text-xs font-semibold text-gray-600 mb-1.5">
                   Dirección
                 </label>
                 <input
@@ -252,51 +234,89 @@ export default function Register() {
                   placeholder="Tu dirección"
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
-                  className="w-full appearance-none rounded-lg border-2 border-gray-200 px-4 py-3 placeholder-gray-400 text-gray-900 focus:border-emerald-500 focus:outline-none transition-colors duration-200 text-sm hover:border-gray-300"
+                  className="w-full rounded-lg border border-gray-200 px-3.5 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-100 transition-all"
                 />
               </div>
             </div>
 
+            {/* Contraseña y Confirmar */}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label htmlFor="password" className="block text-xs font-semibold text-gray-600 mb-1.5">
+                  Contraseña
+                </label>
+                <input
+                  id="password"
+                  name="password"
+                  type="password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  className="w-full rounded-lg border border-gray-200 px-3.5 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-100 transition-all"
+                />
+              </div>
+              <div>
+                <label htmlFor="confirmPassword" className="block text-xs font-semibold text-gray-600 mb-1.5">
+                  Confirmar contraseña
+                </label>
+                <input
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  type="password"
+                  placeholder="••••••••"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                  className="w-full rounded-lg border border-gray-200 px-3.5 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-100 transition-all"
+                />
+              </div>
+            </div>
+
+            {/* Rol */}
             <div>
-              <label
-                htmlFor="role"
-                className="block text-xs text-gray-600 mb-2 font-medium"
-              >
+              <label htmlFor="role" className="block text-xs font-semibold text-gray-600 mb-1.5">
                 ¿Qué eres?
               </label>
-              <select
-                id="role"
-                name="role"
-                value={role}
-                onChange={(e) => setRole(e.target.value)}
-                className="w-full appearance-none rounded-lg border-2 border-gray-200 px-4 py-3 text-gray-900 focus:border-emerald-500 focus:outline-none transition-colors duration-200 text-sm hover:border-gray-300 bg-white"
-              >
-                <option value="professional">Profesional</option>
-                <option value="store_owner">Local / Tienda</option>
-              </select>
+              <div className="grid grid-cols-2 gap-3">
+                {[
+                  { value: "professional", label: "Profesional", icon: "👤" },
+                  { value: "store_owner", label: "Local / Tienda", icon: "🏪" },
+                ].map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => setRole(opt.value)}
+                    className={`flex items-center gap-2 px-4 py-3 rounded-lg border-2 text-sm font-semibold transition-all ${
+                      role === opt.value
+                        ? "border-emerald-500 bg-emerald-50 text-emerald-800"
+                        : "border-gray-200 text-gray-600 hover:border-gray-300"
+                    }`}
+                  >
+                    <span>{opt.icon}</span>
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
             </div>
 
             <button
               type="submit"
               disabled={loading}
-              className="flex h-12 w-full items-center justify-center rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-base transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 disabled:opacity-70 disabled:cursor-not-allowed shadow-md hover:shadow-lg"
+              className="mt-2 h-11 w-full rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm transition-all focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed shadow-sm hover:shadow-md"
             >
-              {loading ? "Registrando..." : "Registrarse"}
+              {loading ? "Registrando..." : "Crear cuenta"}
             </button>
-
-            <p className="text-center text-sm text-gray-600 mt-6">
-              {"¿Ya tienes cuenta? "}
-              <Link
-                href="/login"
-                className="font-semibold text-emerald-700 hover:text-emerald-800"
-              >
-                Inicia sesión aquí
-              </Link>
-            </p>
           </form>
 
-          {/* Pie de página */}
-          <p className="text-xs text-gray-500 text-center mt-8">
+          <p className="text-center text-sm text-gray-500 mt-6">
+            ¿Ya tienes cuenta?{" "}
+            <Link href="/login" className="font-semibold text-emerald-700 hover:text-emerald-800">
+              Inicia sesión
+            </Link>
+          </p>
+
+          <p className="text-xs text-gray-400 text-center mt-4">
             Al registrarte aceptas nuestros términos y condiciones de servicio
           </p>
         </div>
