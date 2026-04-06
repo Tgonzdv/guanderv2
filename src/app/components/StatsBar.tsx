@@ -1,75 +1,47 @@
-﻿"use client";
+﻿import { queryD1 } from '@/lib/cloudflare-d1';
+import StatsBarClient from './StatsBarClient';
 
-import { useEffect, useRef, useState } from "react";
+export default async function StatsBar() {
+  let stores = 0;
+  let professionals = 0;
+  let categories = 0;
+  let plans = 0;
 
-interface StatItem {
-  value: number;
-  suffix?: string;
-  label: string;
-}
+  try {
+    const r = await queryD1<{ count: number }>('SELECT COUNT(*) as count FROM stores', [], { revalidate: 60 });
+    stores = r[0]?.count ?? 0;
+  } catch { /* fallback */ }
 
-const stats: StatItem[] = [
-  { value: 0, suffix: "+", label: "Tiendas aliadas" },
-  { value: 0, suffix: "+", label: "Profesionales" },
-  { value: 0, label: "Categorías" },
-  { value: 0, label: "Planes disponibles" },
-];
-
-function AnimatedCounter({ value, suffix = "" }: { value: number; suffix?: string }) {
-  const [count, setCount] = useState(0);
-  const ref = useRef<HTMLSpanElement>(null);
-  const started = useRef(false);
-
-  useEffect(() => {
-    if (value === 0) return;
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting && !started.current) {
-          started.current = true;
-          const duration = 1500;
-          const steps = 60;
-          const increment = value / steps;
-          let current = 0;
-          const timer = setInterval(() => {
-            current += increment;
-            if (current >= value) {
-              setCount(value);
-              clearInterval(timer);
-            } else {
-              setCount(Math.floor(current));
-            }
-          }, duration / steps);
-        }
-      },
-      { threshold: 0.3 }
+  try {
+    const r = await queryD1<{ count: number }>(
+      "SELECT COUNT(*) as count FROM users u JOIN roles r ON u.fk_rol = r.id_rol WHERE r.rol = 'professional'",
+      [], { revalidate: 60 }
     );
+    professionals = r[0]?.count ?? 0;
+  } catch { /* fallback */ }
 
-    if (ref.current) observer.observe(ref.current);
-    return () => observer.disconnect();
-  }, [value]);
+  try {
+    const r = await queryD1<{ count: number }>(
+      'SELECT COUNT(DISTINCT fk_category) as count FROM stores WHERE fk_category IS NOT NULL',
+      [], { revalidate: 60 }
+    );
+    categories = r[0]?.count ?? 0;
+  } catch { /* fallback */ }
 
-  return (
-    <span ref={ref} className="text-4xl font-black" style={{ color: "#43D696" }}>
-      {count}
-      {suffix}
-    </span>
-  );
-}
+  try {
+    const r = await queryD1<{ count: number }>(
+      "SELECT COUNT(*) as count FROM subscription WHERE state = 'activo'",
+      [], { revalidate: 60 }
+    );
+    plans = r[0]?.count ?? 0;
+  } catch { /* fallback */ }
 
-export default function StatsBar() {
-  return (
-    <section className="w-full" style={{ background: "#1a1b3c" }}>
-      <div className="max-w-7xl mx-auto px-8 py-10 grid grid-cols-2 gap-y-8 sm:grid-cols-4">
-        {stats.map((stat) => (
-          <div key={stat.label} className="flex flex-col items-center gap-2">
-            <AnimatedCounter value={stat.value} suffix={stat.suffix} />
-            <span className="text-xs text-white/60 font-medium uppercase tracking-wider text-center">
-              {stat.label}
-            </span>
-          </div>
-        ))}
-      </div>
-    </section>
-  );
+  const stats = [
+    { value: stores,        suffix: '+', label: 'Tiendas aliadas' },
+    { value: professionals, suffix: '+', label: 'Profesionales' },
+    { value: categories,               label: 'Categorías' },
+    { value: plans,                    label: 'Planes disponibles' },
+  ];
+
+  return <StatsBarClient stats={stats} />;
 }
