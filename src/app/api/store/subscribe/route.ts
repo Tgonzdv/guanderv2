@@ -18,7 +18,7 @@ type MPPreferenceBody = {
     failure: string;
     pending: string;
   };
-  auto_return: string;
+  auto_return?: string;
   metadata: Record<string, unknown>;
 };
 
