@@ -87,6 +87,7 @@ export type SubscriptionPlanOption = {
 
 export type DashboardData = {
   store: StoreSummaryRow;
+  planOptions: SubscriptionPlanOption[];
   servicesCount: number;
   activeCouponsCount: number;
   avgStoreRating: number;
