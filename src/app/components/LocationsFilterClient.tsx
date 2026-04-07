@@ -11,10 +11,10 @@ import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
 import CircularProgress from "@mui/material/CircularProgress";
 import InputAdornment from "@mui/material/InputAdornment";
+import Pagination from "@mui/material/Pagination";
 import L from "leaflet";
 import SearchIcon from "@mui/icons-material/Search";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
-import PhotoCameraIcon from "@mui/icons-material/PhotoCamera";
 
 const CATEGORY_GRADIENTS: Record<string, { from: string; to: string }> = {
   Veterinaria: { from: "#3D52D5", to: "#4A9FD4" },
@@ -51,6 +51,7 @@ type MarkerPoint = {
   lng: number;
   description: string;
   addressLabel: string;
+  image: string | null;
 };
 
 const guanderIcon = L.icon({
@@ -68,6 +69,42 @@ function parseLatLng(raw: string | null): { lat: number; lng: number } | null {
   if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
   if (lat === 0 && lng === 0) return null;
   return { lat, lng };
+}
+
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/\"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+function normalizeImageUrl(value: string | null): string | null {
+  if (!value) return null;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+
+  if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
+    try {
+      const parsed = JSON.parse(trimmed) as
+        | { url?: string; image_url?: string; secure_url?: string }
+        | Array<{ url?: string; image_url?: string; secure_url?: string }>;
+
+      if (Array.isArray(parsed)) {
+        const first = parsed[0];
+        const candidate = first?.url ?? first?.secure_url ?? first?.image_url;
+        return candidate ? encodeURI(candidate) : null;
+      }
+
+      const candidate = parsed.url ?? parsed.secure_url ?? parsed.image_url;
+      return candidate ? encodeURI(candidate) : null;
+    } catch {
+      return null;
+    }
+  }
+
+  return encodeURI(trimmed);
 }
 
 async function geocodeAddress(address: string): Promise<{ lat: number; lng: number } | null> {
@@ -109,6 +146,7 @@ function StoresMap({ locations }: { locations: LocationItem[] }) {
             lng: direct.lng,
             description: item.description,
             addressLabel: item.address ?? item.city,
+            image: normalizeImageUrl(item.image),
           });
           continue;
         }
@@ -126,6 +164,7 @@ function StoresMap({ locations }: { locations: LocationItem[] }) {
           lng: resolved.lng,
           description: item.description,
           addressLabel: queryAddress,
+          image: normalizeImageUrl(item.image),
         });
       }
 
@@ -171,18 +210,37 @@ function StoresMap({ locations }: { locations: LocationItem[] }) {
     points.forEach((point) => {
       const marker = L.marker([point.lat, point.lng], { icon: guanderIcon });
       const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${point.lat},${point.lng}`;
+      const imageHtml = point.image
+        ? `<img
+              src="${escapeHtml(point.image)}"
+              alt="${escapeHtml(point.name)}"
+              style="width:100%;height:100px;object-fit:cover;border-radius:10px;border:1px solid rgba(23,58,45,0.12);margin-bottom:8px;"
+            />`
+        : "";
+      const photoLinkHtml = point.image
+        ? `<a
+            href="${escapeHtml(point.image)}"
+            target="_blank"
+            rel="noopener noreferrer"
+            style="display:inline-block;margin-top:9px;padding:8px 12px;border-radius:999px;background:linear-gradient(135deg,#3D52D5 0%,#4A9FD4 100%);color:#ffffff;text-decoration:none;font-size:12px;font-weight:800;letter-spacing:0.01em;box-shadow:0 6px 16px rgba(61,82,213,0.28);border:1px solid rgba(255,255,255,0.32);"
+          >
+            Ver foto completa ↗
+          </a>`
+        : "";
       marker.bindPopup(
         `<div style="min-width:190px;max-width:260px;">
-          <div style="font-weight:800;color:#173a2d;">${point.name}</div>
-          <div style="font-size:12px;color:#35584a;margin-top:4px;">${point.addressLabel}</div>
-          <div style="font-size:12px;margin-top:6px;">${point.description}</div>
+          ${imageHtml}
+          <div style="font-weight:800;color:#173a2d;">${escapeHtml(point.name)}</div>
+          <div style="font-size:12px;color:#35584a;margin-top:4px;">${escapeHtml(point.addressLabel)}</div>
+          <div style="font-size:12px;margin-top:6px;">${escapeHtml(point.description)}</div>
+          ${photoLinkHtml}
           <a
             href="${directionsUrl}"
             target="_blank"
             rel="noopener noreferrer"
             style="display:inline-block;margin-top:10px;padding:8px 10px;border-radius:10px;background:#173a2d;color:#ffffff;text-decoration:none;font-size:12px;font-weight:700;"
           >
-            Como llegar
+            Ver ruta
           </a>
         </div>`,
       );
@@ -246,16 +304,43 @@ function StoresMap({ locations }: { locations: LocationItem[] }) {
   }
 
   return (
-    <Card variant="outlined" sx={{ border: "1px solid rgba(61,82,213,0.14)", borderRadius: 3 }}>
-      <CardContent sx={{ p: { xs: 1.2, sm: 1.5 }, "&:last-child": { pb: { xs: 1.2, sm: 1.5 } } }}>
-        <Typography variant="subtitle1" sx={{ fontWeight: 800, color: "#173a2d", mb: 1 }}>
+    <Card
+      variant="outlined"
+      sx={{
+        border: "1px solid rgba(61,82,213,0.14)",
+        borderRadius: 2,
+        overflow: "hidden",
+        background: "linear-gradient(180deg, rgba(243,247,255,0.96) 0%, rgba(255,255,255,0.98) 32%, #fff 100%)",
+        boxShadow: "0 16px 38px rgba(61,82,213,0.08)",
+      }}
+    >
+      <CardContent sx={{ p: { xs: 1.4, sm: 1.8 }, "&:last-child": { pb: { xs: 1.4, sm: 1.8 } } }}>
+        <Typography
+          variant="subtitle1"
+          sx={{
+            fontWeight: 900,
+            color: "#173a2d",
+            mb: 0.7,
+            letterSpacing: "0.01em",
+          }}
+        >
           Mapa de locales adheridos
         </Typography>
-        <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 1.2 }}>
+        <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 1.4 }}>
           Navega el mapa, haz zoom y toca los marcadores para ver el detalle del local.
         </Typography>
 
-        <Box ref={mapContainerRef} sx={{ width: "100%", height: 420, borderRadius: 2, overflow: "hidden" }} />
+        <Box
+          ref={mapContainerRef}
+          sx={{
+            width: "100%",
+            height: "clamp(300px, 44vh, 430px)",
+            borderRadius: 0,
+            overflow: "hidden",
+            border: "1px solid rgba(61,82,213,0.14)",
+            boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.45), 0 8px 24px rgba(17,24,39,0.12)",
+          }}
+        />
       </CardContent>
     </Card>
   );
@@ -264,6 +349,7 @@ function StoresMap({ locations }: { locations: LocationItem[] }) {
 export default function LocationsFilterClient({ locations }: LocationsFilterClientProps) {
   const [activeCategory, setActiveCategory] = useState<string>("Todos");
   const [searchTerm, setSearchTerm] = useState<string>("");
+  const [page, setPage] = useState(1);
 
   const distinct = Array.from(new Set(locations.map((l) => l.category)));
   const categories = ["Todos", ...distinct];
@@ -284,6 +370,18 @@ export default function LocationsFilterClient({ locations }: LocationsFilterClie
       normalizeText(l.description).includes(normalizedTerm)
     );
   });
+
+  useEffect(() => {
+    setPage(1);
+  }, [activeCategory, searchTerm]);
+
+  const pageSize = 6;
+  const totalPages = Math.max(1, Math.ceil(filteredLocations.length / pageSize));
+  const currentPage = Math.min(page, totalPages);
+  const paginatedLocations = filteredLocations.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize,
+  );
 
   const hasActiveFilters = activeCategory !== "Todos" || searchTerm.trim().length > 0;
 
@@ -340,6 +438,7 @@ export default function LocationsFilterClient({ locations }: LocationsFilterClie
               onClick={() => {
                 setActiveCategory("Todos");
                 setSearchTerm("");
+                setPage(1);
               }}
               sx={{ whiteSpace: "nowrap", px: 3, py: 1 }}
             >
@@ -363,90 +462,124 @@ export default function LocationsFilterClient({ locations }: LocationsFilterClie
         </CardContent>
       </Card>
 
-      <Box sx={{ mb: 2.5 }}>
-        <StoresMap locations={filteredLocations} />
-      </Box>
-
       <Box
         sx={{
           display: "grid",
-          gridTemplateColumns: { xs: "1fr", md: "repeat(2, 1fr)", lg: "repeat(3, 1fr)" },
-          gap: 2.5,
+          gridTemplateColumns: { xs: "1fr", lg: "minmax(280px, 0.9fr) minmax(0, 1.6fr)" },
+          gap: 2,
+          alignItems: "start",
         }}
       >
-        {filteredLocations.map((location) => {
-          const grad = CATEGORY_GRADIENTS[location.category] ?? { from: "#3D52D5", to: "#6B7FD4" };
-          return (
-            <Card
-              key={location.id}
-              variant="outlined"
-              sx={{
-                border: "1px solid",
-                borderColor: "rgba(61,82,213,0.1)",
-                overflow: "hidden",
-                transition: "transform 0.25s, box-shadow 0.25s",
-                "&:hover": {
-                  transform: "translateY(-4px)",
-                  boxShadow: "0 8px 28px rgba(61,82,213,0.12)",
-                },
-              }}
-            >
-              <Box
+        <Box
+          sx={{
+            minWidth: 0,
+            position: { lg: "sticky" },
+            top: { lg: 86 },
+          }}
+        >
+          <StoresMap locations={filteredLocations} />
+        </Box>
+
+        <Box
+          sx={{
+            minWidth: 0,
+            display: "grid",
+            gridTemplateColumns: { xs: "1fr", md: "repeat(2, minmax(0, 1fr))", xl: "repeat(2, minmax(0, 1fr))" },
+            gap: 1.5,
+          }}
+        >
+          {paginatedLocations.map((location) => {
+            return (
+              <Card
+                key={location.id}
+                variant="outlined"
                 sx={{
-                  height: 140,
-                  background: location.image ? "none" : `linear-gradient(135deg, ${grad.from} 0%, ${grad.to} 100%)`,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  position: "relative",
+                  border: "1px solid rgba(61,82,213,0.11)",
                   overflow: "hidden",
+                  borderRadius: 2,
+                  background: "linear-gradient(180deg, #ffffff 0%, #f9fbff 100%)",
+                  boxShadow: "0 6px 16px rgba(27,39,94,0.08)",
+                  transition: "transform 0.25s, box-shadow 0.25s, border-color 0.25s",
+                  "&:hover": {
+                    transform: "translateY(-5px)",
+                    boxShadow: "0 14px 34px rgba(61,82,213,0.16)",
+                    borderColor: "rgba(61,82,213,0.24)",
+                  },
                 }}
               >
-                {location.image ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={location.image}
-                    alt={location.name}
-                    style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-                  />
-                ) : (
-                  <PhotoCameraIcon sx={{ fontSize: 40, color: "rgba(255,255,255,0.35)" }} />
-                )}
-                <Chip
-                  label={location.category}
-                  size="small"
-                  sx={{
-                    position: "absolute",
-                    top: 10,
-                    right: 10,
-                    bgcolor: "rgba(255,255,255,0.18)",
-                    backdropFilter: "blur(8px)",
-                    WebkitBackdropFilter: "blur(8px)",
-                    color: "white",
-                    fontWeight: 700,
-                    fontSize: "0.65rem",
-                    border: "1px solid rgba(255,255,255,0.3)",
-                  }}
-                />
-              </Box>
-
-              <CardContent sx={{ p: 2.5, "&:last-child": { pb: 2.5 } }}>
-                <Typography variant="subtitle1" sx={{ fontWeight: 700, fontSize: "0.9375rem", lineHeight: 1.3, mb: 1 }}>
-                  {location.name}
-                </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 2, lineHeight: 1.6 }}>
-                  {location.description}
-                </Typography>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                  <LocationOnIcon sx={{ fontSize: 14, color: "primary.main" }} />
-                  <Typography variant="caption" color="primary.main" sx={{ fontWeight: 700 }}>
-                    {location.city}
+                <CardContent sx={{ p: 1.75, "&:last-child": { pb: 1.75 } }}>
+                  <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1, mb: 0.75 }}>
+                    <Chip
+                      label={location.category}
+                      size="small"
+                      sx={{
+                        bgcolor: "rgba(61,82,213,0.1)",
+                        color: "#3044c6",
+                        fontWeight: 800,
+                        fontSize: "0.65rem",
+                        border: "1px solid rgba(61,82,213,0.15)",
+                      }}
+                    />
+                  </Box>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 700, fontSize: "0.9rem", lineHeight: 1.25, mb: 0.75 }}>
+                    {location.name}
                   </Typography>
-                </Box>
-              </CardContent>
-            </Card>
-          );
-        })}
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{
+                      mb: 1.25,
+                      lineHeight: 1.45,
+                      fontSize: "0.92rem",
+                      display: "-webkit-box",
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: "vertical",
+                      overflow: "hidden",
+                    }}
+                  >
+                    {location.description}
+                  </Typography>
+                  <Box
+                    sx={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 0.5,
+                      px: 0.9,
+                      py: 0.45,
+                      borderRadius: 99,
+                      bgcolor: "rgba(61,82,213,0.09)",
+                    }}
+                  >
+                    <LocationOnIcon sx={{ fontSize: 13, color: "primary.main" }} />
+                    <Typography variant="caption" color="primary.main" sx={{ fontWeight: 700 }}>
+                      {location.city}
+                    </Typography>
+                  </Box>
+                </CardContent>
+              </Card>
+            );
+          })}
+
+          {filteredLocations.length > pageSize && (
+            <Box
+              sx={{
+                gridColumn: "1 / -1",
+                display: "flex",
+                justifyContent: "center",
+                pt: 0.5,
+              }}
+            >
+              <Pagination
+                count={totalPages}
+                page={currentPage}
+                onChange={(_, value) => setPage(value)}
+                color="primary"
+                shape="rounded"
+                size="small"
+              />
+            </Box>
+          )}
+        </Box>
       </Box>
 
       {filteredLocations.length === 0 && (
@@ -457,11 +590,11 @@ export default function LocationsFilterClient({ locations }: LocationsFilterClie
             textAlign: "center",
             border: "2px dashed",
             borderColor: "rgba(61,82,213,0.15)",
-            borderRadius: 3,
+            borderRadius: 2,
           }}
         >
           <Typography color="text.secondary">
-            No encontramos locales con esos filtros. Proba otra categoria o termino de busqueda.
+            No encontramos locales con esos filtros. Prueba otra categoría o cambia el término de búsqueda.
           </Typography>
         </Box>
       )}

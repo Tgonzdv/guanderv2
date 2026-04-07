@@ -50,7 +50,7 @@ export default async function LocationsFilterSection() {
       description:
         store.description ??
         (store.stars != null
-          ? `Local con calificacion promedio de ${store.stars} estrellas.`
+          ? `Local con calificación promedio de ${store.stars} estrellas.`
           : "Sin descripción disponible."),
       city:
         extractCityFromAddress(store.address) ??
@@ -77,7 +77,7 @@ export default async function LocationsFilterSection() {
       <Container maxWidth="xl" sx={{ px: { xs: 3, sm: 4 } }}>
         <Box sx={{ textAlign: 'center', mb: 6 }}>
           <Typography variant="h2" sx={{ fontSize: { xs: '1.75rem', sm: '2.25rem' }, mb: 1.5 }}>
-            Locales y Profesionales Adheridos
+            Locales y profesionales adheridos
           </Typography>
           <Typography color="text.secondary" sx={{ maxWidth: 560, mx: 'auto' }}>
             Filtra por categoría y encuentra rápidamente el lugar ideal para tu mascota.
