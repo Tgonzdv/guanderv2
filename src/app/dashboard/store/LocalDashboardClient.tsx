@@ -20,11 +20,6 @@ import {
   ListItemText,
   Paper,
   Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
   Toolbar,
   Typography,
 } from "@mui/material";
@@ -41,6 +36,11 @@ import LogoutRoundedIcon from "@mui/icons-material/LogoutRounded";
 import StarRoundedIcon from "@mui/icons-material/StarRounded";
 import { ThemeProvider, alpha, createTheme } from "@mui/material/styles";
 import type { DashboardData } from "./types";
+import {
+  StoreCouponsCrudSection,
+  StorePromotionsCrudSection,
+  StoreServicesCrudSection,
+} from "./StoreCrudSections";
 
 type DashboardSection =
   | "dashboard"
@@ -243,233 +243,19 @@ function DashboardOverview({ data }: { data: DashboardData }) {
 }
 
 function ServicesSection({ data }: { data: DashboardData }) {
-  return (
-    <Card elevation={0} sx={{ border: "1px solid #d6e4da" }}>
-      <CardContent>
-        <Typography variant="h6" color="#173a2d">
-          Mis Servicios
-        </Typography>
-        <Typography variant="body2" sx={{ mt: 0.5 }}>
-          Vista operacional de profesionales vinculados a tu local.
-        </Typography>
-
-        <Table size="small" sx={{ mt: 2 }}>
-          <TableHead>
-            <TableRow>
-              <TableCell>Servicio</TableCell>
-              <TableCell align="center">Estrellas</TableCell>
-              <TableCell align="center">Acepta puntos</TableCell>
-              <TableCell align="center">Estado</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {data.services.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={4}>No hay profesionales asociados a este local.</TableCell>
-              </TableRow>
-            )}
-            {data.services.map((service) => (
-              <TableRow key={service.id_professional}>
-                <TableCell sx={{ fontWeight: 700, color: "#173a2d" }}>{service.service_name}</TableCell>
-                <TableCell align="center">{service.stars.toFixed(1)}</TableCell>
-                <TableCell align="center">{service.accept_point === 1 ? "Si" : "No"}</TableCell>
-                <TableCell align="center">
-                  <Chip size="small" label="Activo" sx={{ bgcolor: "#deebdf", color: "#173a2d" }} />
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </CardContent>
-    </Card>
-  );
+  return <StoreServicesCrudSection initialItems={data.services} />;
 }
 
 function PromotionsSection({ data }: { data: DashboardData }) {
-  const firstCoupon = data.coupons[0];
-
-  return (
-    <Stack spacing={2.2}>
-      <Card elevation={0} sx={{ border: "1px solid #d6e4da" }}>
-        <CardContent>
-          <Typography variant="h6" color="#173a2d">
-            Mis Promociones
-          </Typography>
-          <Typography variant="body2" sx={{ mt: 0.5 }}>
-            Beneficios del local y piezas listas para publicar.
-          </Typography>
-
-          <Box sx={{ mt: 2, display: "grid", gridTemplateColumns: { xs: "1fr", md: "repeat(3, minmax(0, 1fr))" }, gap: 1.3 }}>
-            {data.benefits.length === 0 && <Typography variant="body2">Sin beneficios activos.</Typography>}
-            {data.benefits.map((benefit) => (
-              <Paper key={benefit.id_benefit_store} variant="outlined" sx={{ borderColor: "#d7e7dc", p: 1.5, bgcolor: "#f3faf5" }}>
-                <Typography variant="body2" fontWeight={800} color="#173a2d">
-                  {benefit.percentage}% OFF
-                </Typography>
-                <Typography variant="caption" sx={{ display: "block", mt: 0.7 }}>
-                  {benefit.description}
-                </Typography>
-                <Chip size="small" sx={{ mt: 1, bgcolor: "#deebdf", color: "#173a2d" }} label={`Req. ${benefit.req_point} pts`} />
-              </Paper>
-            ))}
-          </Box>
-        </CardContent>
-      </Card>
-
-      <Card
-        elevation={0}
-        sx={{
-          border: "1px solid #d6e4da",
-          background: "radial-gradient(circle at 30% 10%, #f3fbf6 0%, #ffffff 64%)",
-        }}
-      >
-        <CardContent>
-          <Typography variant="h6" color="#173a2d">
-            Cupom visual listo para compartir
-          </Typography>
-          <Typography variant="body2" sx={{ mt: 0.5 }}>
-            Tarjeta tipo promocional inspirada en tu referencia, adaptada a Guander.
-          </Typography>
-
-          <Box sx={{ mt: 2.2, display: "grid", gap: 2, gridTemplateColumns: { xs: "1fr", md: "1.2fr 1fr" } }}>
-            <Paper sx={{ borderRadius: 3, border: "1px solid #cee0d3", p: 2, bgcolor: "#f6fcf8" }}>
-              <Typography variant="overline" sx={{ letterSpacing: "0.14em", color: "#5a7a6a" }}>
-                CODIGO PROMOCIONAL
-              </Typography>
-              <Typography variant="h5" fontWeight={900} color="#173a2d">
-                {firstCoupon?.code_coupon ?? "GUANDER-LOCAL"}
-              </Typography>
-              <Typography variant="body2" sx={{ mt: 0.5 }}>
-                {firstCoupon ? `${firstCoupon.name} · ${money(firstCoupon.amount)}` : "Genera tu primer cupon para activar esta tarjeta."}
-              </Typography>
-              <Button variant="contained" sx={{ mt: 2, bgcolor: "#1f4b3b" }}>
-                Compartir Promocion
-              </Button>
-            </Paper>
-
-            <Paper
-              sx={{
-                borderRadius: 3,
-                border: "1px dashed #b8d1c0",
-                bgcolor: "#ffffff",
-                p: 2,
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <Box
-                sx={{
-                  width: 140,
-                  height: 140,
-                  borderRadius: 2,
-                  border: "10px solid #1f4b3b",
-                  display: "grid",
-                  placeItems: "center",
-                  backgroundColor: "#deebdf",
-                }}
-              >
-                <Typography variant="caption" sx={{ textAlign: "center", color: "#1f4b3b", fontWeight: 700 }}>
-                  QR
-                  <br />
-                  Guander
-                </Typography>
-              </Box>
-              <Typography variant="caption" sx={{ mt: 1.2, color: "#5a7a6a" }}>
-                Escaneable desde app movil
-              </Typography>
-            </Paper>
-          </Box>
-        </CardContent>
-      </Card>
-    </Stack>
-  );
+  return <StorePromotionsCrudSection initialItems={data.benefits} />;
 }
 
 function CouponsSection({ data }: { data: DashboardData }) {
   return (
-    <Stack spacing={2}>
-      <Card elevation={0} sx={{ border: "1px solid #d6e4da" }}>
-        <CardContent>
-          <Typography variant="h6" color="#173a2d">
-            Cupones activos
-          </Typography>
-          <Table size="small" sx={{ mt: 1.5 }}>
-            <TableHead>
-              <TableRow>
-                <TableCell>Cupon</TableCell>
-                <TableCell>Monto</TableCell>
-                <TableCell align="center">Canjes</TableCell>
-                <TableCell>Vence</TableCell>
-                <TableCell>Estado</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {data.coupons.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={5}>Aun no has creado cupones.</TableCell>
-                </TableRow>
-              )}
-              {data.coupons.map((coupon) => (
-                <TableRow key={coupon.id_coupon}>
-                  <TableCell>
-                    <Typography variant="body2" fontWeight={700} color="#173a2d">
-                      {coupon.name}
-                    </Typography>
-                    <Typography variant="caption">{coupon.code_coupon}</Typography>
-                  </TableCell>
-                  <TableCell>{money(coupon.amount)}</TableCell>
-                  <TableCell align="center">{coupon.redemptions}</TableCell>
-                  <TableCell>{when(coupon.expiration_date)}</TableCell>
-                  <TableCell>
-                    <Chip size="small" label={coupon.coupon_state_name ?? (coupon.state === 1 ? "Activo" : "Inactivo")} sx={{ bgcolor: "#deebdf", color: "#173a2d" }} />
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-
-      <Card elevation={0} sx={{ border: "1px solid #d6e4da" }}>
-        <CardContent>
-          <Typography variant="h6" color="#173a2d">
-            Cupones consumidos
-          </Typography>
-          <Typography variant="body2" sx={{ mt: 0.5 }}>
-            Registro de clientes que canjearon cupones en tu local.
-          </Typography>
-          <Table size="small" sx={{ mt: 1.5 }}>
-            <TableHead>
-              <TableRow>
-                <TableCell>Cliente</TableCell>
-                <TableCell>Cupon</TableCell>
-                <TableCell>Codigo</TableCell>
-                <TableCell>Monto</TableCell>
-                <TableCell>Puntos</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {data.couponConsumptions.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={5}>Aun no hay consumos de cupones.</TableCell>
-                </TableRow>
-              )}
-              {data.couponConsumptions.map((entry) => (
-                <TableRow key={entry.id_coupon_buy}>
-                  <TableCell>{entry.customer_name} {entry.customer_last_name}</TableCell>
-                  <TableCell>{entry.coupon_name}</TableCell>
-                  <TableCell>{entry.code_coupon}</TableCell>
-                  <TableCell>{money(entry.amount)}</TableCell>
-                  <TableCell>{entry.point_req}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-    </Stack>
+    <StoreCouponsCrudSection
+      initialCoupons={data.coupons}
+      couponConsumptions={data.couponConsumptions}
+    />
   );
 }
 

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { queryD1 } from "@/lib/cloudflare-d1";
+import { CloudflareD1Error, queryD1 } from "@/lib/cloudflare-d1";
 import { comparePassword, generateToken } from "@/lib/auth";
 
 interface UserRow {
@@ -101,21 +101,20 @@ export async function POST(request: NextRequest) {
     console.error("Login error:", error);
 
     // Manejo específico de errores
-    if (error instanceof Error) {
-      if (error.message.includes("CloudflareD1Error")) {
-        console.error("Database connection error:", error.message);
-        return NextResponse.json(
-          { error: "Error en la base de datos. Intenta más tarde." },
-          { status: 503 },
-        );
-      }
-      if (error.message.includes("JSON")) {
-        console.error("JSON parsing error:", error.message);
-        return NextResponse.json(
-          { error: "Datos inválidos recibidos" },
-          { status: 400 },
-        );
-      }
+    if (error instanceof CloudflareD1Error) {
+      console.error("Database connection error:", error.message);
+      return NextResponse.json(
+        { error: "Error en la base de datos. Intenta más tarde." },
+        { status: 503 },
+      );
+    }
+
+    if (error instanceof Error && error.message.includes("JSON")) {
+      console.error("JSON parsing error:", error.message);
+      return NextResponse.json(
+        { error: "Datos inválidos recibidos" },
+        { status: 400 },
+      );
     }
 
     return NextResponse.json(
