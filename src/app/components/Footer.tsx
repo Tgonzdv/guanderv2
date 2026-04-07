@@ -5,16 +5,16 @@ import MuiLink from '@mui/material/Link';
 import Divider from '@mui/material/Divider';
 
 const legalLinks = [
-  { label: "T�rminos y Condiciones", href: "#" },
-  { label: "Pol�tica de Privacidad", href: "#" },
+  { label: "Términos y condiciones", href: "#" },
+  { label: "Política de privacidad", href: "#" },
   { label: "Preguntas Frecuentes", href: "#" },
   { label: "Contacto", href: "#" },
 ];
 
 const professionalLinks = [
-  { label: "Registrar mi Local", href: "#" },
-  { label: "C�mo Adherirse", href: "#" },
-  { label: "Centro de Ayuda", href: "#" },
+  { label: "Registrar mi local", href: "#" },
+  { label: "Cómo adherirse", href: "#" },
+  { label: "Centro de ayuda", href: "#" },
 ];
 
 const socialIcons = [
@@ -55,7 +55,7 @@ export default function Footer() {
               <Typography variant="h6" sx={{ color: 'white', fontWeight: 800 }}>Guander</Typography>
             </Box>
             <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.55)', lineHeight: 1.8 }}>
-              La plataforma que conecta due�os de mascotas con locales y servicios pet-friendly.
+              La plataforma que conecta dueños de mascotas con locales y servicios pet-friendly.
               Descubre, visita y acumula recompensas.
             </Typography>
           </Box>
@@ -83,7 +83,7 @@ export default function Footer() {
           {/* Para Profesionales */}
           <Box>
             <Typography variant="subtitle2" sx={{ color: 'white', fontWeight: 700, mb: 2, letterSpacing: '0.04em', textTransform: 'uppercase', fontSize: '0.75rem' }}>
-              Para Profesionales
+              Para profesionales
             </Typography>
             <Box component="ul" sx={{ listStyle: 'none', m: 0, p: 0, display: 'flex', flexDirection: 'column', gap: 1.25 }}>
               {professionalLinks.map((link) => (
@@ -103,7 +103,7 @@ export default function Footer() {
           {/* Redes Sociales */}
           <Box>
             <Typography variant="subtitle2" sx={{ color: 'white', fontWeight: 700, mb: 2, letterSpacing: '0.04em', textTransform: 'uppercase', fontSize: '0.75rem' }}>
-              Redes Sociales
+              Redes sociales
             </Typography>
             <Box sx={{ display: 'flex', gap: 1.5 }}>
               {socialIcons.map((social) => (
@@ -130,7 +130,7 @@ export default function Footer() {
         <Divider sx={{ borderColor: 'rgba(255,255,255,0.1)', mb: 4 }} />
 
         <Typography variant="body2" sx={{ textAlign: 'center', color: 'rgba(255,255,255,0.4)' }}>
-          � 2025 Guander. Todos los derechos reservados.
+          © 2026 Guander. Todos los derechos reservados.
         </Typography>
       </Container>
     </Box>

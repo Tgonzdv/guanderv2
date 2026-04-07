@@ -61,13 +61,13 @@ export default function HeroBanner() {
               variant="h1"
               sx={{
                 color: 'white',
-                fontSize: { xs: '2rem', sm: '2.5rem', md: '3.25rem', lg: '3.75rem' },
+                fontSize: { xs: '2.1rem', sm: '2.6rem', md: '3.3rem', lg: '3.8rem' },
                 mb: 3,
               }}
             >
               Encuentra los mejores lugares{' '}
               <Box component="span" sx={{ color: '#43D696' }}>
-                petfriendly cerca de ti
+                pet-friendly cerca de ti
               </Box>
             </Typography>
 
@@ -81,8 +81,8 @@ export default function HeroBanner() {
                 fontSize: { xs: '0.9375rem', md: '1rem' },
               }}
             >
-              Tiendas, veterinarias, cafes, restaurantes y profesionales que aman
-              a las mascotas tanto como tu. Acumula puntos, canjea cupones y dale
+              Tiendas, veterinarias, cafés, restaurantes y profesionales que aman
+              a las mascotas tanto como tú. Acumula puntos, canjea cupones y dale
               lo mejor a tu peludo.
             </Typography>
 
@@ -106,7 +106,7 @@ export default function HeroBanner() {
                   '&:hover': { bgcolor: 'rgba(255,255,255,0.92)' },
                 }}
               >
-                Explorar Tiendas
+                Explorar locales
               </Button>
               <Button
                 component="a"

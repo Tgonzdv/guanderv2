@@ -42,7 +42,7 @@ function toOfferItems(rows: BenefitRow[], source: "Profesional" | "Tienda"): Off
         subtitle:
           description ||
           (source === "Profesional"
-            ? "Promocion disponible para dueñios de mascotas."
+            ? "Promoción disponible para dueños de mascotas."
             : "Oferta exclusiva en establecimientos aliados."),
         tag: source,
       };
@@ -82,7 +82,7 @@ export default async function ExclusiveOffersSection() {
       <Container maxWidth="xl" sx={{ px: { xs: 3, sm: 4 } }}>
         <Box sx={{ textAlign: 'center', mb: 6 }}>
           <Typography variant="h2" sx={{ fontSize: { xs: '1.75rem', sm: '2.25rem' }, mb: 1.5 }}>
-            Ofertas Exclusivas para Dueños
+            Ofertas exclusivas para dueños
           </Typography>
           <Typography color="text.secondary" sx={{ maxWidth: 560, mx: 'auto' }}>
             Beneficios especiales para consentir a tu mascota mientras ahorrás.
