@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
+  Alert,
   AppBar,
   Avatar,
   Box,
@@ -10,6 +11,7 @@ import {
   Card,
   CardContent,
   Chip,
+  CircularProgress,
   CssBaseline,
   Divider,
   Drawer,
@@ -20,6 +22,7 @@ import {
   ListItemText,
   Paper,
   Stack,
+  TextField,
   Toolbar,
   Typography,
 } from "@mui/material";
@@ -327,28 +330,139 @@ function NotificationsSection({ data }: { data: DashboardData }) {
 }
 
 function SubscriptionSection({ data }: { data: DashboardData }) {
+  const [recText, setRecText] = useState("");
+  const [submitted, setSubmitted] = useState(false);
+  const [sending, setSending] = useState(false);
+
+  const currentAmount = data.store.plan_amount ?? 0;
+  const sortedPlans = [...data.planOptions].sort((a, b) => a.amount - b.amount);
+  const nextPlan = sortedPlans.find((p) => p.amount > currentAmount) ?? null;
+  const isHighestPlan = nextPlan === null && data.planOptions.length > 0;
+
+  async function handleSendRec() {
+    if (!recText.trim()) return;
+    setSending(true);
+    try {
+      await fetch("/api/store/recommendation", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ recommendation: recText }),
+      });
+    } catch {
+      // ignore – UX shows success regardless
+    } finally {
+      setSending(false);
+      setSubmitted(true);
+    }
+  }
+
   return (
-    <Card elevation={0} sx={{ border: "1px solid #d6e4da" }}>
-      <CardContent>
-        <Typography variant="h6" color="#173a2d">
-          Mi Suscripcion
-        </Typography>
-        <Typography variant="body2" sx={{ mt: 0.6 }}>
-          Estado del plan activo de este local.
-        </Typography>
+    <Stack spacing={2}>
+      <Card elevation={0} sx={{ border: "1px solid #d6e4da" }}>
+        <CardContent>
+          <Typography variant="h6" color="#173a2d">
+            Mi Suscripcion
+          </Typography>
+          <Typography variant="body2" sx={{ mt: 0.6 }}>
+            Estado del plan activo de este local.
+          </Typography>
 
-        <Box sx={{ mt: 2, display: "grid", gap: 2, gridTemplateColumns: { xs: "1fr", md: "repeat(3, minmax(0, 1fr))" } }}>
-          <PanelCard title="Plan" value={data.store.plan_name ?? "Sin plan"} />
-          <PanelCard title="Monto" value={data.store.plan_amount != null ? money(data.store.plan_amount) : "N/A"} />
-          <PanelCard title="Vencimiento" value={data.store.plan_expiration_date ? when(data.store.plan_expiration_date) : "N/A"} />
-        </Box>
+          <Box sx={{ mt: 2, display: "grid", gap: 2, gridTemplateColumns: { xs: "1fr", md: "repeat(3, minmax(0, 1fr))" } }}>
+            <PanelCard title="Plan" value={data.store.plan_name ?? "Sin plan"} />
+            <PanelCard title="Monto" value={data.store.plan_amount != null ? money(data.store.plan_amount) : "N/A"} />
+            <PanelCard title="Vencimiento" value={data.store.plan_expiration_date ? when(data.store.plan_expiration_date) : "N/A"} />
+          </Box>
 
-        <Stack direction="row" spacing={1} sx={{ mt: 2 }}>
-          <Chip label={`Estado plan: ${data.store.plan_state ?? "Desconocido"}`} sx={{ bgcolor: "#deebdf", color: "#173a2d" }} />
-          <Chip label={`Estado payout: ${data.store.payout_state ?? "Desconocido"}`} sx={{ bgcolor: "#deebdf", color: "#173a2d" }} />
-        </Stack>
-      </CardContent>
-    </Card>
+          <Stack direction="row" spacing={1} sx={{ mt: 2 }}>
+            <Chip label={`Estado plan: ${data.store.plan_state ?? "Desconocido"}`} sx={{ bgcolor: "#deebdf", color: "#173a2d" }} />
+            <Chip label={`Estado payout: ${data.store.payout_state ?? "Desconocido"}`} sx={{ bgcolor: "#deebdf", color: "#173a2d" }} />
+          </Stack>
+        </CardContent>
+      </Card>
+
+      {nextPlan && (
+        <Card
+          elevation={0}
+          sx={{
+            border: "1px solid #b6d4c2",
+            background: "linear-gradient(135deg, #1f4b3b 0%, #2a6a53 100%)",
+            color: "#fff",
+          }}
+        >
+          <CardContent>
+            <Typography variant="overline" sx={{ color: "rgba(255,255,255,0.72)", letterSpacing: "0.12em" }}>
+              PLAN SUPERIOR DISPONIBLE
+            </Typography>
+            <Typography variant="h5" sx={{ mt: 0.5, fontWeight: 900 }}>
+              {nextPlan.name}
+            </Typography>
+            <Typography variant="body2" sx={{ mt: 0.8, color: "rgba(255,255,255,0.82)" }}>
+              {nextPlan.description}
+            </Typography>
+            <Typography variant="h6" sx={{ mt: 1.2, fontWeight: 900 }}>
+              {money(nextPlan.amount)} / mes
+            </Typography>
+            <Button
+              variant="contained"
+              sx={{
+                mt: 2,
+                bgcolor: "#fff",
+                color: "#1f4b3b",
+                fontWeight: 700,
+                "&:hover": { bgcolor: "#e8f1ec" },
+              }}
+            >
+              Quiero actualizar al {nextPlan.name}
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {isHighestPlan && (
+        <Card elevation={0} sx={{ border: "1px solid #d6e4da" }}>
+          <CardContent>
+            <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 0.8 }}>
+              <WorkspacePremiumRoundedIcon sx={{ color: "#1f4b3b" }} />
+              <Typography variant="h6" color="#173a2d">
+                Estas en nuestro plan mas alto
+              </Typography>
+            </Stack>
+            <Typography variant="body2">
+              Ya cuentas con todos los beneficios disponibles de Guander. ¿Tienes alguna idea o funcionalidad que te
+              gustaria ver en la plataforma? ¡Cuentanos!
+            </Typography>
+
+            {submitted ? (
+              <Alert severity="success" sx={{ mt: 2 }}>
+                ¡Gracias por tu recomendacion! La tendremos muy en cuenta.
+              </Alert>
+            ) : (
+              <Stack spacing={1.5} sx={{ mt: 2 }}>
+                <TextField
+                  multiline
+                  rows={3}
+                  fullWidth
+                  label="Tu idea o recomendacion"
+                  placeholder="Ej: Me gustaria poder programar descuentos automaticos por temporada..."
+                  value={recText}
+                  onChange={(e) => setRecText(e.target.value)}
+                  size="small"
+                />
+                <Button
+                  variant="contained"
+                  disabled={!recText.trim() || sending}
+                  onClick={handleSendRec}
+                  startIcon={sending ? <CircularProgress size={16} sx={{ color: "#fff" }} /> : undefined}
+                  sx={{ alignSelf: "flex-start", bgcolor: "#1f4b3b", "&:hover": { bgcolor: "#173a2d" } }}
+                >
+                  {sending ? "Enviando..." : "Enviar recomendacion"}
+                </Button>
+              </Stack>
+            )}
+          </CardContent>
+        </Card>
+      )}
+    </Stack>
   );
 }
 
@@ -452,7 +566,7 @@ function SidebarContent({
       </List>
 
       <Divider sx={{ my: 1.5 }} />
-      <Button fullWidth variant="contained" startIcon={<MonetizationOnRoundedIcon />} sx={{ bgcolor: "#1f4b3b", mb: 1 }}>
+      <Button fullWidth variant="contained" startIcon={<MonetizationOnRoundedIcon />} onClick={() => onSelect("suscripcion")} sx={{ bgcolor: "#1f4b3b", mb: 1 }}>
         Upgrade Plan
       </Button>
       <Button
