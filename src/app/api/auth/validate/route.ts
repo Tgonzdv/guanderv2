@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import jwt from "jsonwebtoken";
+import { verifyToken } from "@/lib/auth";
 
 export async function GET(request: NextRequest) {
   try {
@@ -9,22 +9,13 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "No token provided" }, { status: 401 });
     }
 
-    const secret = process.env.JWT_SECRET;
-    if (!secret) {
+    const decoded = verifyToken(token);
+    if (!decoded) {
       return NextResponse.json(
-        { error: "Server misconfigured" },
-        { status: 500 },
+        { error: "Invalid token", valid: false },
+        { status: 401 },
       );
     }
-
-    // Validate JWT
-    const decoded = jwt.verify(token, secret) as {
-      id: number;
-      email: string;
-      role: string;
-      iat: number;
-      exp: number;
-    };
 
     return NextResponse.json({ valid: true, decoded });
   } catch (error) {

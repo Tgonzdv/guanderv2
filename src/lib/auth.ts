@@ -1,9 +1,20 @@
 import bcryptjs from "bcryptjs";
 import jwt from "jsonwebtoken";
 
+let warnedMissingJwtSecret = false;
+
 function getJwtSecret(): string {
   const secret = process.env.JWT_SECRET;
   if (!secret) {
+    if (process.env.NODE_ENV !== "production") {
+      if (!warnedMissingJwtSecret) {
+        warnedMissingJwtSecret = true;
+        console.warn(
+          "JWT_SECRET is missing. Falling back to an insecure development secret.",
+        );
+      }
+      return "dev-insecure-jwt-secret-change-me";
+    }
     throw new Error("JWT_SECRET environment variable is not defined");
   }
   return secret;

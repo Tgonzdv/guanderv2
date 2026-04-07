@@ -39,7 +39,9 @@ export default async function LocationsFilterSection() {
 
   try {
     const stores = await queryD1<StoreRow>(
-      "SELECT id_store, name, description, address, location, stars, fk_category, image_url FROM stores ORDER BY id_store ASC"
+      "SELECT id_store, name, description, address, location, stars, fk_category, image_url FROM stores ORDER BY id_store ASC",
+      [],
+      { revalidate: false },
     );
     locations = stores.map((store) => ({
       id: store.id_store,
@@ -55,6 +57,8 @@ export default async function LocationsFilterSection() {
         store.address ??
         store.location ??
         "Ciudad no especificada",
+      address: store.address,
+      location: store.location,
       category:
         store.fk_category != null
           ? (CATEGORY_LABELS[store.fk_category] ?? `Cat. ${store.fk_category}`)
