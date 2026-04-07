@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid plan data." }, { status: 400 });
   }
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+  const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000").replace(/\/$/, "");
 
   const preference: MPPreferenceBody = {
     items: [
