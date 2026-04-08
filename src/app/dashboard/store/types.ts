@@ -77,8 +77,17 @@ export type CouponConsumptionRow = {
   point_req: number;
 };
 
+export type SubscriptionPlanOption = {
+  id_subscription: number;
+  name: string;
+  description: string;
+  state: number;
+  amount: number;
+};
+
 export type DashboardData = {
   store: StoreSummaryRow;
+  planOptions: SubscriptionPlanOption[];
   servicesCount: number;
   activeCouponsCount: number;
   avgStoreRating: number;

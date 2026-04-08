@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
+  Alert,
   AppBar,
   Avatar,
   Box,
@@ -10,6 +11,7 @@ import {
   Card,
   CardContent,
   Chip,
+  CircularProgress,
   CssBaseline,
   Divider,
   Drawer,
@@ -20,6 +22,7 @@ import {
   ListItemText,
   Paper,
   Stack,
+  TextField,
   Toolbar,
   Typography,
 } from "@mui/material";
@@ -56,13 +59,13 @@ const drawerWidth = 284;
 const guanderTheme = createTheme({
   palette: {
     mode: "light",
-    primary: { main: "#1f4675", contrastText: "#ffffff" },
-    secondary: { main: "#2d629b" },
+    primary: { main: "#1f4b3b", contrastText: "#ffffff" },
+    secondary: { main: "#2f6a54" },
     background: {
-      default: "#edf2fb",
+      default: "#edf4ef",
       paper: "#ffffff",
     },
-    success: { main: "#2d629b" },
+    success: { main: "#2e7d5b" },
   },
   shape: { borderRadius: 14 },
   typography: {
@@ -70,7 +73,7 @@ const guanderTheme = createTheme({
     h4: { fontWeight: 800 },
     h5: { fontWeight: 800 },
     h6: { fontWeight: 700 },
-    body2: { color: "#506b8a" },
+    body2: { color: "#4b675b" },
   },
 });
 
@@ -85,9 +88,9 @@ const navItems: Array<{ id: DashboardSection; label: string; icon: React.ReactNo
 ];
 
 function money(value: number): string {
-  return new Intl.NumberFormat("es-CO", {
+  return new Intl.NumberFormat("es-AR", {
     style: "currency",
-    currency: "COP",
+    currency: "ARS",
     maximumFractionDigits: 0,
   }).format(value);
 }
@@ -115,14 +118,14 @@ function PanelCard({ title, subtitle, value }: { title: string; subtitle?: strin
       elevation={0}
       sx={{
         border: "1px solid #d6e4da",
-        background: "linear-gradient(180deg, #ffffff 0%, #f4f8ff 100%)",
+        background: "linear-gradient(180deg, #ffffff 0%, #f7fbf8 100%)",
       }}
     >
       <CardContent>
-        <Typography variant="caption" sx={{ color: "#5b7390", letterSpacing: "0.06em", textTransform: "uppercase" }}>
+        <Typography variant="caption" sx={{ color: "#5f7a6d", letterSpacing: "0.06em", textTransform: "uppercase" }}>
           {title}
         </Typography>
-        <Typography variant="h5" sx={{ mt: 1, color: "#15365f", fontWeight: 900 }}>
+        <Typography variant="h5" sx={{ mt: 1, color: "#173a2d", fontWeight: 900 }}>
           {value}
         </Typography>
         {subtitle && (
@@ -143,8 +146,8 @@ function DashboardOverview({ data }: { data: DashboardData }) {
       <Card
         elevation={0}
         sx={{
-          border: "1px solid #c9d7ea",
-          background: "linear-gradient(125deg, #1f4675 0%, #2d629b 65%, #234e80 100%)",
+          border: "1px solid #ccddd0",
+          background: "linear-gradient(125deg, #1f4b3b 0%, #2a6a53 65%, #1e5946 100%)",
           color: "#fff",
         }}
       >
@@ -162,7 +165,7 @@ function DashboardOverview({ data }: { data: DashboardData }) {
               </Typography>
             </Box>
             <Stack direction="row" spacing={1} alignItems="center">
-              <Chip label={data.store.category_name ?? "Sin categoria"} sx={{ bgcolor: "#dce8f8", color: "#15365f", fontWeight: 700 }} />
+              <Chip label={data.store.category_name ?? "Sin categoria"} sx={{ bgcolor: "#deebdf", color: "#173a2d", fontWeight: 700 }} />
               <Chip icon={<StarRoundedIcon sx={{ color: "#e2c65a !important" }} />} label={`${avgStars} estrellas`} sx={{ bgcolor: "rgba(255,255,255,0.18)", color: "#fff" }} />
             </Stack>
           </Stack>
@@ -179,22 +182,22 @@ function DashboardOverview({ data }: { data: DashboardData }) {
       <Box sx={{ display: "grid", gap: 2, gridTemplateColumns: { xs: "1fr", xl: "1.4fr 1fr" } }}>
         <Card elevation={0} sx={{ border: "1px solid #d6e4da" }}>
           <CardContent>
-            <Typography variant="h6" sx={{ color: "#15365f" }}>
+            <Typography variant="h6" sx={{ color: "#173a2d" }}>
               Actividad reciente
             </Typography>
             <Stack spacing={1.2} sx={{ mt: 2 }}>
               {data.purchases.length === 0 && <Typography variant="body2">Aun no hay compras registradas.</Typography>}
               {data.purchases.map((purchase) => (
-                <Paper key={purchase.id_store_purchase} variant="outlined" sx={{ borderColor: "#dce8f8", p: 1.3, borderRadius: 2, bgcolor: "#f5f9ff" }}>
+                <Paper key={purchase.id_store_purchase} variant="outlined" sx={{ borderColor: "#e0ece4", p: 1.3, borderRadius: 2, bgcolor: "#f8fcf9" }}>
                   <Stack direction="row" justifyContent="space-between" alignItems="center" gap={1}>
                     <Box>
-                      <Typography fontWeight={700} color="#15365f" variant="body2">
+                      <Typography fontWeight={700} color="#173a2d" variant="body2">
                         {purchase.customer_name} {purchase.customer_last_name}
                       </Typography>
                       <Typography variant="caption">{when(purchase.date)}</Typography>
                     </Box>
                     <Box sx={{ textAlign: "right" }}>
-                      <Typography variant="body2" fontWeight={800} color="#15365f">
+                      <Typography variant="body2" fontWeight={800} color="#173a2d">
                         {money(purchase.amount)}
                       </Typography>
                       <Typography variant="caption">+{purchase.points_earn} pts</Typography>
@@ -208,7 +211,7 @@ function DashboardOverview({ data }: { data: DashboardData }) {
 
         <Card elevation={0} sx={{ border: "1px solid #d6e4da" }}>
           <CardContent>
-            <Typography variant="h6" sx={{ color: "#15365f" }}>
+            <Typography variant="h6" sx={{ color: "#173a2d" }}>
               Mi Suscripcion
             </Typography>
             <Paper
@@ -216,7 +219,7 @@ function DashboardOverview({ data }: { data: DashboardData }) {
                 mt: 2,
                 p: 2,
                 borderRadius: 2,
-                bgcolor: "#2d629b",
+                bgcolor: "#3d52d5",
                 color: "#fff",
               }}
             >
@@ -232,8 +235,8 @@ function DashboardOverview({ data }: { data: DashboardData }) {
             </Paper>
 
             <Stack direction="row" spacing={1} sx={{ mt: 2, flexWrap: "wrap" }}>
-              <Chip label={`Plan ${data.store.plan_state ?? "Desconocido"}`} sx={{ bgcolor: "#dce8f8", color: "#15365f" }} />
-              <Chip label={`Payout ${data.store.payout_state ?? "Desconocido"}`} sx={{ bgcolor: "#dce8f8", color: "#15365f" }} />
+              <Chip label={`Plan ${data.store.plan_state ?? "Desconocido"}`} sx={{ bgcolor: "#deebdf", color: "#173a2d" }} />
+              <Chip label={`Payout ${data.store.payout_state ?? "Desconocido"}`} sx={{ bgcolor: "#deebdf", color: "#173a2d" }} />
             </Stack>
           </CardContent>
         </Card>
@@ -263,23 +266,23 @@ function ReviewsSection({ data }: { data: DashboardData }) {
   return (
     <Card elevation={0} sx={{ border: "1px solid #d6e4da" }}>
       <CardContent>
-        <Typography variant="h6" color="#15365f">
+        <Typography variant="h6" color="#173a2d">
           Reseñas de clientes
         </Typography>
         <Stack spacing={1.2} sx={{ mt: 2 }}>
           {data.reviews.length === 0 && <Typography variant="body2">Aun no hay reseñas registradas.</Typography>}
           {data.reviews.map((review) => (
-            <Paper key={review.id_comment} variant="outlined" sx={{ borderColor: "#dce8f8", p: 1.5, borderRadius: 2, bgcolor: "#f5f9ff" }}>
+            <Paper key={review.id_comment} variant="outlined" sx={{ borderColor: "#e0ece4", p: 1.5, borderRadius: 2, bgcolor: "#f8fcf9" }}>
               <Stack direction="row" justifyContent="space-between" alignItems="flex-start" gap={1}>
                 <Box>
-                  <Typography variant="body2" fontWeight={700} color="#15365f">
+                  <Typography variant="body2" fontWeight={700} color="#173a2d">
                     {review.customer_name} {review.customer_last_name}
                   </Typography>
                   <Typography variant="body2" sx={{ mt: 0.5 }}>
                     {review.body}
                   </Typography>
                 </Box>
-                <Chip icon={<StarRoundedIcon />} label={`${review.stars}/5`} size="small" sx={{ bgcolor: "#dce8f8", color: "#15365f" }} />
+                <Chip icon={<StarRoundedIcon />} label={`${review.stars}/5`} size="small" sx={{ bgcolor: "#deebdf", color: "#173a2d" }} />
               </Stack>
               <Typography variant="caption" sx={{ mt: 1, display: "block" }}>
                 {when(review.date)}
@@ -296,20 +299,20 @@ function NotificationsSection({ data }: { data: DashboardData }) {
   return (
     <Card elevation={0} sx={{ border: "1px solid #d6e4da" }}>
       <CardContent>
-        <Typography variant="h6" color="#15365f">
+        <Typography variant="h6" color="#173a2d">
           Notificaciones
         </Typography>
 
         <Stack spacing={1.2} sx={{ mt: 2 }}>
           {data.notifications.length === 0 && <Typography variant="body2">No hay notificaciones para este local.</Typography>}
           {data.notifications.map((notification) => (
-            <Paper key={notification.id_notification} variant="outlined" sx={{ borderColor: "#dce8f8", p: 1.5, borderRadius: 2, bgcolor: "#f5f9ff" }}>
+            <Paper key={notification.id_notification} variant="outlined" sx={{ borderColor: "#e0ece4", p: 1.5, borderRadius: 2, bgcolor: "#f8fcf9" }}>
               <Stack direction="row" gap={1.2}>
-                <Avatar sx={{ bgcolor: "#dce8f8", color: "#15365f", width: 34, height: 34 }}>
+                <Avatar sx={{ bgcolor: "#deebdf", color: "#173a2d", width: 34, height: 34 }}>
                   {initials(notification.name)}
                 </Avatar>
                 <Box>
-                  <Typography variant="body2" fontWeight={700} color="#15365f">
+                  <Typography variant="body2" fontWeight={700} color="#173a2d">
                     {notification.name}
                   </Typography>
                   <Typography variant="caption">{notification.description}</Typography>
@@ -327,28 +330,179 @@ function NotificationsSection({ data }: { data: DashboardData }) {
 }
 
 function SubscriptionSection({ data }: { data: DashboardData }) {
+  const [recText, setRecText] = useState("");
+  const [submitted, setSubmitted] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [upgrading, setUpgrading] = useState(false);
+  const [upgradeError, setUpgradeError] = useState<string | null>(null);
+
+  const currentAmount = data.store.plan_amount ?? 0;
+  const sortedPlans = [...data.planOptions].sort((a, b) => a.amount - b.amount);
+  const nextPlan = sortedPlans.find((p) => p.amount > currentAmount) ?? null;
+  const isHighestPlan = nextPlan === null && data.planOptions.length > 0;
+
+  async function handleUpgrade() {
+    if (!nextPlan) return;
+    setUpgrading(true);
+    setUpgradeError(null);
+    try {
+      const res = await fetch("/api/store/subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          planId: nextPlan.id_subscription,
+          planName: nextPlan.name,
+          planDescription: nextPlan.description,
+          amount: nextPlan.amount,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({})) as { error?: string };
+        setUpgradeError(err.error ?? "No se pudo iniciar el pago. Intenta de nuevo.");
+        return;
+      }
+      const { checkoutUrl } = await res.json() as { checkoutUrl: string };
+      window.location.href = checkoutUrl;
+    } catch {
+      setUpgradeError("Error de red. Verificá tu conexión e intentá de nuevo.");
+    } finally {
+      setUpgrading(false);
+    }
+  }
+
+  async function handleSendRec() {
+    if (!recText.trim()) return;
+    setSending(true);
+    try {
+      await fetch("/api/store/recommendation", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ recommendation: recText }),
+      });
+    } catch {
+      // ignore – UX shows success regardless
+    } finally {
+      setSending(false);
+      setSubmitted(true);
+    }
+  }
+
   return (
-    <Card elevation={0} sx={{ border: "1px solid #d6e4da" }}>
-      <CardContent>
-        <Typography variant="h6" color="#15365f">
-          Mi Suscripcion
-        </Typography>
-        <Typography variant="body2" sx={{ mt: 0.6 }}>
-          Estado del plan activo de este local.
-        </Typography>
+    <Stack spacing={2}>
+      <Card elevation={0} sx={{ border: "1px solid #d6e4da" }}>
+        <CardContent>
+          <Typography variant="h6" color="#173a2d">
+            Mi Suscripcion
+          </Typography>
+          <Typography variant="body2" sx={{ mt: 0.6 }}>
+            Estado del plan activo de este local.
+          </Typography>
 
-        <Box sx={{ mt: 2, display: "grid", gap: 2, gridTemplateColumns: { xs: "1fr", md: "repeat(3, minmax(0, 1fr))" } }}>
-          <PanelCard title="Plan" value={data.store.plan_name ?? "Sin plan"} />
-          <PanelCard title="Monto" value={data.store.plan_amount != null ? money(data.store.plan_amount) : "N/A"} />
-          <PanelCard title="Vencimiento" value={data.store.plan_expiration_date ? when(data.store.plan_expiration_date) : "N/A"} />
-        </Box>
+          <Box sx={{ mt: 2, display: "grid", gap: 2, gridTemplateColumns: { xs: "1fr", md: "repeat(3, minmax(0, 1fr))" } }}>
+            <PanelCard title="Plan" value={data.store.plan_name ?? "Sin plan"} />
+            <PanelCard title="Monto" value={data.store.plan_amount != null ? money(data.store.plan_amount) : "N/A"} />
+            <PanelCard title="Vencimiento" value={data.store.plan_expiration_date ? when(data.store.plan_expiration_date) : "N/A"} />
+          </Box>
 
-        <Stack direction="row" spacing={1} sx={{ mt: 2 }}>
-          <Chip label={`Estado plan: ${data.store.plan_state ?? "Desconocido"}`} sx={{ bgcolor: "#dce8f8", color: "#15365f" }} />
-          <Chip label={`Estado payout: ${data.store.payout_state ?? "Desconocido"}`} sx={{ bgcolor: "#dce8f8", color: "#15365f" }} />
-        </Stack>
-      </CardContent>
-    </Card>
+          <Stack direction="row" spacing={1} sx={{ mt: 2 }}>
+            <Chip label={`Estado plan: ${data.store.plan_state ?? "Desconocido"}`} sx={{ bgcolor: "#deebdf", color: "#173a2d" }} />
+            <Chip label={`Estado payout: ${data.store.payout_state ?? "Desconocido"}`} sx={{ bgcolor: "#deebdf", color: "#173a2d" }} />
+          </Stack>
+        </CardContent>
+      </Card>
+
+      {nextPlan && (
+        <Card
+          elevation={0}
+          sx={{
+            border: "1px solid #b6d4c2",
+            background: "linear-gradient(135deg, #1f4b3b 0%, #2a6a53 100%)",
+            color: "#fff",
+          }}
+        >
+          <CardContent>
+            <Typography variant="overline" sx={{ color: "rgba(255,255,255,0.72)", letterSpacing: "0.12em" }}>
+              PLAN SUPERIOR DISPONIBLE
+            </Typography>
+            <Typography variant="h5" sx={{ mt: 0.5, fontWeight: 900 }}>
+              {nextPlan.name}
+            </Typography>
+            <Typography variant="body2" sx={{ mt: 0.8, color: "rgba(255,255,255,0.82)" }}>
+              {nextPlan.description}
+            </Typography>
+            <Typography variant="h6" sx={{ mt: 1.2, fontWeight: 900 }}>
+              {money(nextPlan.amount)} / mes
+            </Typography>
+            {upgradeError && (
+              <Alert severity="error" sx={{ mt: 1.5, bgcolor: "rgba(255,255,255,0.12)", color: "#fff", "& .MuiAlert-icon": { color: "#fff" } }}>
+                {upgradeError}
+              </Alert>
+            )}
+            <Button
+              variant="contained"
+              disabled={upgrading}
+              onClick={handleUpgrade}
+              startIcon={upgrading ? <CircularProgress size={16} sx={{ color: "#1f4b3b" }} /> : undefined}
+              sx={{
+                mt: 2,
+                bgcolor: "#fff",
+                color: "#1f4b3b",
+                fontWeight: 700,
+                "&:hover": { bgcolor: "#e8f1ec" },
+                "&.Mui-disabled": { bgcolor: "rgba(255,255,255,0.7)", color: "#1f4b3b" },
+              }}
+            >
+              {upgrading ? "Redirigiendo..." : `Quiero actualizar al ${nextPlan.name}`}
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {isHighestPlan && (
+        <Card elevation={0} sx={{ border: "1px solid #d6e4da" }}>
+          <CardContent>
+            <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 0.8 }}>
+              <WorkspacePremiumRoundedIcon sx={{ color: "#1f4b3b" }} />
+              <Typography variant="h6" color="#173a2d">
+                Estas en nuestro plan mas alto
+              </Typography>
+            </Stack>
+            <Typography variant="body2">
+              Ya cuentas con todos los beneficios disponibles de Guander. ¿Tienes alguna idea o funcionalidad que te
+              gustaria ver en la plataforma? ¡Cuentanos!
+            </Typography>
+
+            {submitted ? (
+              <Alert severity="success" sx={{ mt: 2 }}>
+                ¡Gracias por tu recomendacion! La tendremos muy en cuenta.
+              </Alert>
+            ) : (
+              <Stack spacing={1.5} sx={{ mt: 2 }}>
+                <TextField
+                  multiline
+                  rows={3}
+                  fullWidth
+                  label="Tu idea o recomendacion"
+                  placeholder="Ej: Me gustaria poder programar descuentos automaticos por temporada..."
+                  value={recText}
+                  onChange={(e) => setRecText(e.target.value)}
+                  size="small"
+                />
+                <Button
+                  variant="contained"
+                  disabled={!recText.trim() || sending}
+                  onClick={handleSendRec}
+                  startIcon={sending ? <CircularProgress size={16} sx={{ color: "#fff" }} /> : undefined}
+                  sx={{ alignSelf: "flex-start", bgcolor: "#1f4b3b", "&:hover": { bgcolor: "#173a2d" } }}
+                >
+                  {sending ? "Enviando..." : "Enviar recomendacion"}
+                </Button>
+              </Stack>
+            )}
+          </CardContent>
+        </Card>
+      )}
+    </Stack>
   );
 }
 
@@ -417,14 +571,14 @@ function SidebarContent({
           borderRadius: 2,
           px: 1.5,
           py: 1.5,
-          border: "1px solid #d4e0ef",
-          bgcolor: "#f5f9ff",
+          border: "1px solid #d6e4da",
+          bgcolor: "#f6fbf7",
         }}
       >
-        <Typography variant="overline" sx={{ color: "#5b7390", letterSpacing: "0.12em" }}>
+        <Typography variant="overline" sx={{ color: "#5f7a6d", letterSpacing: "0.12em" }}>
           GUANDER LOCAL
         </Typography>
-        <Typography variant="body2" sx={{ color: "#15365f", fontWeight: 800 }}>
+        <Typography variant="body2" sx={{ color: "#173a2d", fontWeight: 800 }}>
           Centro de control
         </Typography>
       </Paper>
@@ -439,9 +593,9 @@ function SidebarContent({
               sx={{
                 borderRadius: 2,
                 mb: 0.5,
-                bgcolor: active ? alpha("#1f4675", 0.12) : "transparent",
-                color: active ? "#15365f" : "#5b7390",
-                border: active ? "1px solid #c9d7ea" : "1px solid transparent",
+                bgcolor: active ? alpha("#1f4b3b", 0.12) : "transparent",
+                color: active ? "#173a2d" : "#4b675b",
+                border: active ? "1px solid #c7dccc" : "1px solid transparent",
               }}
             >
               <ListItemIcon sx={{ color: "inherit", minWidth: 36 }}>{item.icon}</ListItemIcon>
@@ -452,7 +606,7 @@ function SidebarContent({
       </List>
 
       <Divider sx={{ my: 1.5 }} />
-      <Button fullWidth variant="contained" startIcon={<MonetizationOnRoundedIcon />} sx={{ bgcolor: "#1f4675", mb: 1 }}>
+      <Button fullWidth variant="contained" startIcon={<MonetizationOnRoundedIcon />} onClick={() => onSelect("suscripcion")} sx={{ bgcolor: "#1f4b3b", mb: 1 }}>
         Upgrade Plan
       </Button>
       <Button
@@ -460,7 +614,7 @@ function SidebarContent({
         variant="outlined"
         startIcon={<LogoutRoundedIcon />}
         onClick={handleLogout}
-        sx={{ color: "#1f4675", borderColor: "#1f4675" }}
+        sx={{ color: "#1f4b3b", borderColor: "#1f4b3b" }}
       >
         Cerrar Sesión
       </Button>
@@ -478,7 +632,7 @@ export default function LocalDashboardClient({ data, error }: { data: DashboardD
     return (
       <ThemeProvider theme={guanderTheme}>
         <CssBaseline />
-        <Box sx={{ minHeight: "100vh", bgcolor: "#edf2fb", p: 3 }}>
+        <Box sx={{ minHeight: "100vh", bgcolor: "#edf4ef", p: 3 }}>
           <Paper sx={{ maxWidth: 760, mx: "auto", p: 3, border: "1px solid #efb6b6", bgcolor: "#fff4f4" }}>
             <Typography color="#9b2020" fontWeight={700}>
               {error}
@@ -493,9 +647,9 @@ export default function LocalDashboardClient({ data, error }: { data: DashboardD
     return (
       <ThemeProvider theme={guanderTheme}>
         <CssBaseline />
-        <Box sx={{ minHeight: "100vh", bgcolor: "#edf2fb", p: 3 }}>
+        <Box sx={{ minHeight: "100vh", bgcolor: "#edf4ef", p: 3 }}>
           <Paper sx={{ maxWidth: 760, mx: "auto", p: 3, border: "1px solid #d6e4da" }}>
-            <Typography variant="h6" color="#15365f" fontWeight={800}>
+            <Typography variant="h6" color="#173a2d" fontWeight={800}>
               No hay tiendas para mostrar
             </Typography>
             <Typography variant="body2" sx={{ mt: 1 }}>
@@ -510,7 +664,7 @@ export default function LocalDashboardClient({ data, error }: { data: DashboardD
   return (
     <ThemeProvider theme={guanderTheme}>
       <CssBaseline />
-      <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: "#edf2fb" }}>
+      <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: "#edf4ef" }}>
         <AppBar
           position="fixed"
           color="transparent"
@@ -518,14 +672,14 @@ export default function LocalDashboardClient({ data, error }: { data: DashboardD
           sx={{
             display: { md: "none" },
             backdropFilter: "blur(8px)",
-            borderBottom: "1px solid #d4e0ef",
+            borderBottom: "1px solid #d8e7dd",
           }}
         >
           <Toolbar>
             <IconButton edge="start" onClick={() => setMobileOpen(true)}>
               <MenuIcon />
             </IconButton>
-            <Typography sx={{ ml: 1, fontWeight: 700, color: "#15365f" }}>Guander Local</Typography>
+            <Typography sx={{ ml: 1, fontWeight: 700, color: "#173a2d" }}>Guander Local</Typography>
           </Toolbar>
         </AppBar>
 
@@ -560,7 +714,7 @@ export default function LocalDashboardClient({ data, error }: { data: DashboardD
               "& .MuiDrawer-paper": {
                 boxSizing: "border-box",
                 width: drawerWidth,
-                borderRight: "1px solid #d4e0ef",
+                borderRight: "1px solid #d8e7dd",
                 bgcolor: "#ffffff",
               },
             }}
@@ -578,19 +732,19 @@ export default function LocalDashboardClient({ data, error }: { data: DashboardD
               p: { xs: 1.8, md: 2.2 },
               mb: 2,
               borderRadius: 3,
-              background: "linear-gradient(180deg, #ffffff 0%, #f4f8ff 100%)",
+              background: "linear-gradient(180deg, #ffffff 0%, #f6fbf8 100%)",
             }}
           >
             <Stack direction={{ xs: "column", md: "row" }} justifyContent="space-between" gap={1}>
               <Box>
-                <Typography variant="overline" sx={{ color: "#5b7390", letterSpacing: "0.12em" }}>
+                <Typography variant="overline" sx={{ color: "#5f7a6d", letterSpacing: "0.12em" }}>
                   Dashboard Local
                 </Typography>
-                <Typography variant="h5" sx={{ color: "#15365f", mt: 0.4 }}>
+                <Typography variant="h5" sx={{ color: "#173a2d", mt: 0.4 }}>
                   {title}
                 </Typography>
               </Box>
-              <Chip sx={{ bgcolor: "#dce8f8", color: "#15365f", alignSelf: "center" }} label={data.store.name} />
+              <Chip sx={{ bgcolor: "#deebdf", color: "#173a2d", alignSelf: "center" }} label={data.store.name} />
             </Stack>
           </Paper>
 
