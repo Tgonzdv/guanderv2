@@ -39,7 +39,9 @@ export default async function LocationsFilterSection() {
 
   try {
     const stores = await queryD1<StoreRow>(
-      "SELECT id_store, name, description, address, location, stars, fk_category, image_url FROM stores ORDER BY id_store ASC"
+      "SELECT id_store, name, description, address, location, stars, fk_category, image_url FROM stores ORDER BY id_store ASC",
+      [],
+      { revalidate: false },
     );
     locations = stores.map((store) => ({
       id: store.id_store,
@@ -48,13 +50,15 @@ export default async function LocationsFilterSection() {
       description:
         store.description ??
         (store.stars != null
-          ? `Local con calificacion promedio de ${store.stars} estrellas.`
+          ? `Local con calificación promedio de ${store.stars} estrellas.`
           : "Sin descripción disponible."),
       city:
         extractCityFromAddress(store.address) ??
         store.address ??
         store.location ??
         "Ciudad no especificada",
+      address: store.address,
+      location: store.location,
       category:
         store.fk_category != null
           ? (CATEGORY_LABELS[store.fk_category] ?? `Cat. ${store.fk_category}`)
@@ -73,7 +77,7 @@ export default async function LocationsFilterSection() {
       <Container maxWidth="xl" sx={{ px: { xs: 3, sm: 4 } }}>
         <Box sx={{ textAlign: 'center', mb: 6 }}>
           <Typography variant="h2" sx={{ fontSize: { xs: '1.75rem', sm: '2.25rem' }, mb: 1.5 }}>
-            Locales y Profesionales Adheridos
+            Locales y profesionales adheridos
           </Typography>
           <Typography color="text.secondary" sx={{ maxWidth: 560, mx: 'auto' }}>
             Filtra por categoría y encuentra rápidamente el lugar ideal para tu mascota.

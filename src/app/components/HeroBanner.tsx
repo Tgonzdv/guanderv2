@@ -57,17 +57,18 @@ export default function HeroBanner() {
         >
           {/* Left: copy */}
           <Box sx={{ maxWidth: { xs: '100%', lg: 560 }, textAlign: { xs: 'center', lg: 'left' } }}>
+           
             <Typography
               variant="h1"
               sx={{
                 color: 'white',
-                fontSize: { xs: '2rem', sm: '2.5rem', md: '3.25rem', lg: '3.75rem' },
+                fontSize: { xs: '2.1rem', sm: '2.6rem', md: '3.3rem', lg: '3.8rem' },
                 mb: 3,
               }}
             >
               Encuentra los mejores lugares{' '}
               <Box component="span" sx={{ color: '#43D696' }}>
-                petfriendly cerca de ti
+                pet-friendly cerca de ti
               </Box>
             </Typography>
 
@@ -81,8 +82,8 @@ export default function HeroBanner() {
                 fontSize: { xs: '0.9375rem', md: '1rem' },
               }}
             >
-              Tiendas, veterinarias, cafes, restaurantes y profesionales que aman
-              a las mascotas tanto como tu. Acumula puntos, canjea cupones y dale
+              Tiendas, veterinarias, cafés, restaurantes y profesionales que aman
+              a las mascotas tanto como tú. Acumula puntos, canjea cupones y dale
               lo mejor a tu peludo.
             </Typography>
 
@@ -106,7 +107,7 @@ export default function HeroBanner() {
                   '&:hover': { bgcolor: 'rgba(255,255,255,0.92)' },
                 }}
               >
-                Explorar Tiendas
+                Explorar locales
               </Button>
               <Button
                 component="a"
@@ -147,32 +148,12 @@ export default function HeroBanner() {
               boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
             }}
           >
-            <Box sx={{ position: 'relative', width: 112, height: 112 }}>
-              <Box
-                sx={{
-                  position: 'absolute',
-                  top: 0,
-                  left: '50%',
-                  transform: 'translateX(-50%)',
-                  width: 56,
-                  height: 56,
-                  borderRadius: '50%',
-                  bgcolor: 'rgba(255,255,255,0.35)',
-                }}
-              />
-              <Box
-                sx={{
-                  position: 'absolute',
-                  bottom: 0,
-                  left: '50%',
-                  transform: 'translateX(-50%) rotate(12deg)',
-                  width: 80,
-                  height: 80,
-                  borderRadius: '40%',
-                  bgcolor: 'rgba(255,255,255,0.25)',
-                }}
-              />
-            </Box>
+            <Box
+              component="img"
+              src="/LogoGuander.png"
+              alt="Logo Guander"
+              sx={{ width: 160, height: 160, objectFit: 'cover', borderRadius: '1.5rem', boxShadow: '0 8px 24px rgba(0,0,0,0.2)' }}
+            />
           </Box>
         </Box>
       </Container>

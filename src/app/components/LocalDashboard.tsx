@@ -13,6 +13,7 @@ import type {
   ReviewRow,
   ServiceRow,
   StoreSummaryRow,
+  SubscriptionPlanOption,
 } from "../dashboard/store/types";
 
 type NumberRow = { value: number | null };
@@ -62,6 +63,7 @@ async function loadDashboardData(userId: number): Promise<DashboardData | null> 
     services,
     notifications,
     couponConsumptions,
+    planOptions,
   ] = await Promise.all([
     queryD1<NumberRow>(
       `SELECT COUNT(*) AS value
@@ -218,10 +220,18 @@ async function loadDashboardData(userId: number): Promise<DashboardData | null> 
       LIMIT 8`,
       [store.id_store]
     ),
+    queryD1<SubscriptionPlanOption>(
+      `SELECT id_subscription, name, description, state, amount
+       FROM subscription
+       WHERE state = 1
+       ORDER BY amount ASC`,
+      []
+    ),
   ]);
 
   return {
     store,
+    planOptions,
     servicesCount: servicesCountRows[0]?.value ?? 0,
     activeCouponsCount: activeCouponsRows[0]?.value ?? 0,
     avgStoreRating: Number(avgRatingRows[0]?.value ?? 0),

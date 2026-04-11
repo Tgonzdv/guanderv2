@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
+  Alert,
   AppBar,
   Avatar,
   Box,
@@ -10,6 +11,7 @@ import {
   Card,
   CardContent,
   Chip,
+  CircularProgress,
   CssBaseline,
   Divider,
   Drawer,
@@ -20,11 +22,7 @@ import {
   ListItemText,
   Paper,
   Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
+  TextField,
   Toolbar,
   Typography,
 } from "@mui/material";
@@ -41,6 +39,11 @@ import LogoutRoundedIcon from "@mui/icons-material/LogoutRounded";
 import StarRoundedIcon from "@mui/icons-material/StarRounded";
 import { ThemeProvider, alpha, createTheme } from "@mui/material/styles";
 import type { DashboardData } from "./types";
+import {
+  StoreCouponsCrudSection,
+  StorePromotionsCrudSection,
+  StoreServicesCrudSection,
+} from "./StoreCrudSections";
 
 type DashboardSection =
   | "dashboard"
@@ -85,9 +88,9 @@ const navItems: Array<{ id: DashboardSection; label: string; icon: React.ReactNo
 ];
 
 function money(value: number): string {
-  return new Intl.NumberFormat("es-CO", {
+  return new Intl.NumberFormat("es-AR", {
     style: "currency",
-    currency: "COP",
+    currency: "ARS",
     maximumFractionDigits: 0,
   }).format(value);
 }
@@ -243,233 +246,19 @@ function DashboardOverview({ data }: { data: DashboardData }) {
 }
 
 function ServicesSection({ data }: { data: DashboardData }) {
-  return (
-    <Card elevation={0} sx={{ border: "1px solid #d6e4da" }}>
-      <CardContent>
-        <Typography variant="h6" color="#173a2d">
-          Mis Servicios
-        </Typography>
-        <Typography variant="body2" sx={{ mt: 0.5 }}>
-          Vista operacional de profesionales vinculados a tu local.
-        </Typography>
-
-        <Table size="small" sx={{ mt: 2 }}>
-          <TableHead>
-            <TableRow>
-              <TableCell>Servicio</TableCell>
-              <TableCell align="center">Estrellas</TableCell>
-              <TableCell align="center">Acepta puntos</TableCell>
-              <TableCell align="center">Estado</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {data.services.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={4}>No hay profesionales asociados a este local.</TableCell>
-              </TableRow>
-            )}
-            {data.services.map((service) => (
-              <TableRow key={service.id_professional}>
-                <TableCell sx={{ fontWeight: 700, color: "#173a2d" }}>{service.service_name}</TableCell>
-                <TableCell align="center">{service.stars.toFixed(1)}</TableCell>
-                <TableCell align="center">{service.accept_point === 1 ? "Si" : "No"}</TableCell>
-                <TableCell align="center">
-                  <Chip size="small" label="Activo" sx={{ bgcolor: "#deebdf", color: "#173a2d" }} />
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </CardContent>
-    </Card>
-  );
+  return <StoreServicesCrudSection initialItems={data.services} />;
 }
 
 function PromotionsSection({ data }: { data: DashboardData }) {
-  const firstCoupon = data.coupons[0];
-
-  return (
-    <Stack spacing={2.2}>
-      <Card elevation={0} sx={{ border: "1px solid #d6e4da" }}>
-        <CardContent>
-          <Typography variant="h6" color="#173a2d">
-            Mis Promociones
-          </Typography>
-          <Typography variant="body2" sx={{ mt: 0.5 }}>
-            Beneficios del local y piezas listas para publicar.
-          </Typography>
-
-          <Box sx={{ mt: 2, display: "grid", gridTemplateColumns: { xs: "1fr", md: "repeat(3, minmax(0, 1fr))" }, gap: 1.3 }}>
-            {data.benefits.length === 0 && <Typography variant="body2">Sin beneficios activos.</Typography>}
-            {data.benefits.map((benefit) => (
-              <Paper key={benefit.id_benefit_store} variant="outlined" sx={{ borderColor: "#d7e7dc", p: 1.5, bgcolor: "#f3faf5" }}>
-                <Typography variant="body2" fontWeight={800} color="#173a2d">
-                  {benefit.percentage}% OFF
-                </Typography>
-                <Typography variant="caption" sx={{ display: "block", mt: 0.7 }}>
-                  {benefit.description}
-                </Typography>
-                <Chip size="small" sx={{ mt: 1, bgcolor: "#deebdf", color: "#173a2d" }} label={`Req. ${benefit.req_point} pts`} />
-              </Paper>
-            ))}
-          </Box>
-        </CardContent>
-      </Card>
-
-      <Card
-        elevation={0}
-        sx={{
-          border: "1px solid #d6e4da",
-          background: "radial-gradient(circle at 30% 10%, #f3fbf6 0%, #ffffff 64%)",
-        }}
-      >
-        <CardContent>
-          <Typography variant="h6" color="#173a2d">
-            Cupom visual listo para compartir
-          </Typography>
-          <Typography variant="body2" sx={{ mt: 0.5 }}>
-            Tarjeta tipo promocional inspirada en tu referencia, adaptada a Guander.
-          </Typography>
-
-          <Box sx={{ mt: 2.2, display: "grid", gap: 2, gridTemplateColumns: { xs: "1fr", md: "1.2fr 1fr" } }}>
-            <Paper sx={{ borderRadius: 3, border: "1px solid #cee0d3", p: 2, bgcolor: "#f6fcf8" }}>
-              <Typography variant="overline" sx={{ letterSpacing: "0.14em", color: "#5a7a6a" }}>
-                CODIGO PROMOCIONAL
-              </Typography>
-              <Typography variant="h5" fontWeight={900} color="#173a2d">
-                {firstCoupon?.code_coupon ?? "GUANDER-LOCAL"}
-              </Typography>
-              <Typography variant="body2" sx={{ mt: 0.5 }}>
-                {firstCoupon ? `${firstCoupon.name} · ${money(firstCoupon.amount)}` : "Genera tu primer cupon para activar esta tarjeta."}
-              </Typography>
-              <Button variant="contained" sx={{ mt: 2, bgcolor: "#1f4b3b" }}>
-                Compartir Promocion
-              </Button>
-            </Paper>
-
-            <Paper
-              sx={{
-                borderRadius: 3,
-                border: "1px dashed #b8d1c0",
-                bgcolor: "#ffffff",
-                p: 2,
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <Box
-                sx={{
-                  width: 140,
-                  height: 140,
-                  borderRadius: 2,
-                  border: "10px solid #1f4b3b",
-                  display: "grid",
-                  placeItems: "center",
-                  backgroundColor: "#deebdf",
-                }}
-              >
-                <Typography variant="caption" sx={{ textAlign: "center", color: "#1f4b3b", fontWeight: 700 }}>
-                  QR
-                  <br />
-                  Guander
-                </Typography>
-              </Box>
-              <Typography variant="caption" sx={{ mt: 1.2, color: "#5a7a6a" }}>
-                Escaneable desde app movil
-              </Typography>
-            </Paper>
-          </Box>
-        </CardContent>
-      </Card>
-    </Stack>
-  );
+  return <StorePromotionsCrudSection initialItems={data.benefits} />;
 }
 
 function CouponsSection({ data }: { data: DashboardData }) {
   return (
-    <Stack spacing={2}>
-      <Card elevation={0} sx={{ border: "1px solid #d6e4da" }}>
-        <CardContent>
-          <Typography variant="h6" color="#173a2d">
-            Cupones activos
-          </Typography>
-          <Table size="small" sx={{ mt: 1.5 }}>
-            <TableHead>
-              <TableRow>
-                <TableCell>Cupon</TableCell>
-                <TableCell>Monto</TableCell>
-                <TableCell align="center">Canjes</TableCell>
-                <TableCell>Vence</TableCell>
-                <TableCell>Estado</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {data.coupons.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={5}>Aun no has creado cupones.</TableCell>
-                </TableRow>
-              )}
-              {data.coupons.map((coupon) => (
-                <TableRow key={coupon.id_coupon}>
-                  <TableCell>
-                    <Typography variant="body2" fontWeight={700} color="#173a2d">
-                      {coupon.name}
-                    </Typography>
-                    <Typography variant="caption">{coupon.code_coupon}</Typography>
-                  </TableCell>
-                  <TableCell>{money(coupon.amount)}</TableCell>
-                  <TableCell align="center">{coupon.redemptions}</TableCell>
-                  <TableCell>{when(coupon.expiration_date)}</TableCell>
-                  <TableCell>
-                    <Chip size="small" label={coupon.coupon_state_name ?? (coupon.state === 1 ? "Activo" : "Inactivo")} sx={{ bgcolor: "#deebdf", color: "#173a2d" }} />
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-
-      <Card elevation={0} sx={{ border: "1px solid #d6e4da" }}>
-        <CardContent>
-          <Typography variant="h6" color="#173a2d">
-            Cupones consumidos
-          </Typography>
-          <Typography variant="body2" sx={{ mt: 0.5 }}>
-            Registro de clientes que canjearon cupones en tu local.
-          </Typography>
-          <Table size="small" sx={{ mt: 1.5 }}>
-            <TableHead>
-              <TableRow>
-                <TableCell>Cliente</TableCell>
-                <TableCell>Cupon</TableCell>
-                <TableCell>Codigo</TableCell>
-                <TableCell>Monto</TableCell>
-                <TableCell>Puntos</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {data.couponConsumptions.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={5}>Aun no hay consumos de cupones.</TableCell>
-                </TableRow>
-              )}
-              {data.couponConsumptions.map((entry) => (
-                <TableRow key={entry.id_coupon_buy}>
-                  <TableCell>{entry.customer_name} {entry.customer_last_name}</TableCell>
-                  <TableCell>{entry.coupon_name}</TableCell>
-                  <TableCell>{entry.code_coupon}</TableCell>
-                  <TableCell>{money(entry.amount)}</TableCell>
-                  <TableCell>{entry.point_req}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-    </Stack>
+    <StoreCouponsCrudSection
+      initialCoupons={data.coupons}
+      couponConsumptions={data.couponConsumptions}
+    />
   );
 }
 
@@ -541,28 +330,179 @@ function NotificationsSection({ data }: { data: DashboardData }) {
 }
 
 function SubscriptionSection({ data }: { data: DashboardData }) {
+  const [recText, setRecText] = useState("");
+  const [submitted, setSubmitted] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [upgrading, setUpgrading] = useState(false);
+  const [upgradeError, setUpgradeError] = useState<string | null>(null);
+
+  const currentAmount = data.store.plan_amount ?? 0;
+  const sortedPlans = [...data.planOptions].sort((a, b) => a.amount - b.amount);
+  const nextPlan = sortedPlans.find((p) => p.amount > currentAmount) ?? null;
+  const isHighestPlan = nextPlan === null && data.planOptions.length > 0;
+
+  async function handleUpgrade() {
+    if (!nextPlan) return;
+    setUpgrading(true);
+    setUpgradeError(null);
+    try {
+      const res = await fetch("/api/store/subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          planId: nextPlan.id_subscription,
+          planName: nextPlan.name,
+          planDescription: nextPlan.description,
+          amount: nextPlan.amount,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({})) as { error?: string };
+        setUpgradeError(err.error ?? "No se pudo iniciar el pago. Intenta de nuevo.");
+        return;
+      }
+      const { checkoutUrl } = await res.json() as { checkoutUrl: string };
+      window.location.href = checkoutUrl;
+    } catch {
+      setUpgradeError("Error de red. Verificá tu conexión e intentá de nuevo.");
+    } finally {
+      setUpgrading(false);
+    }
+  }
+
+  async function handleSendRec() {
+    if (!recText.trim()) return;
+    setSending(true);
+    try {
+      await fetch("/api/store/recommendation", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ recommendation: recText }),
+      });
+    } catch {
+      // ignore – UX shows success regardless
+    } finally {
+      setSending(false);
+      setSubmitted(true);
+    }
+  }
+
   return (
-    <Card elevation={0} sx={{ border: "1px solid #d6e4da" }}>
-      <CardContent>
-        <Typography variant="h6" color="#173a2d">
-          Mi Suscripcion
-        </Typography>
-        <Typography variant="body2" sx={{ mt: 0.6 }}>
-          Estado del plan activo de este local.
-        </Typography>
+    <Stack spacing={2}>
+      <Card elevation={0} sx={{ border: "1px solid #d6e4da" }}>
+        <CardContent>
+          <Typography variant="h6" color="#173a2d">
+            Mi Suscripcion
+          </Typography>
+          <Typography variant="body2" sx={{ mt: 0.6 }}>
+            Estado del plan activo de este local.
+          </Typography>
 
-        <Box sx={{ mt: 2, display: "grid", gap: 2, gridTemplateColumns: { xs: "1fr", md: "repeat(3, minmax(0, 1fr))" } }}>
-          <PanelCard title="Plan" value={data.store.plan_name ?? "Sin plan"} />
-          <PanelCard title="Monto" value={data.store.plan_amount != null ? money(data.store.plan_amount) : "N/A"} />
-          <PanelCard title="Vencimiento" value={data.store.plan_expiration_date ? when(data.store.plan_expiration_date) : "N/A"} />
-        </Box>
+          <Box sx={{ mt: 2, display: "grid", gap: 2, gridTemplateColumns: { xs: "1fr", md: "repeat(3, minmax(0, 1fr))" } }}>
+            <PanelCard title="Plan" value={data.store.plan_name ?? "Sin plan"} />
+            <PanelCard title="Monto" value={data.store.plan_amount != null ? money(data.store.plan_amount) : "N/A"} />
+            <PanelCard title="Vencimiento" value={data.store.plan_expiration_date ? when(data.store.plan_expiration_date) : "N/A"} />
+          </Box>
 
-        <Stack direction="row" spacing={1} sx={{ mt: 2 }}>
-          <Chip label={`Estado plan: ${data.store.plan_state ?? "Desconocido"}`} sx={{ bgcolor: "#deebdf", color: "#173a2d" }} />
-          <Chip label={`Estado payout: ${data.store.payout_state ?? "Desconocido"}`} sx={{ bgcolor: "#deebdf", color: "#173a2d" }} />
-        </Stack>
-      </CardContent>
-    </Card>
+          <Stack direction="row" spacing={1} sx={{ mt: 2 }}>
+            <Chip label={`Estado plan: ${data.store.plan_state ?? "Desconocido"}`} sx={{ bgcolor: "#deebdf", color: "#173a2d" }} />
+            <Chip label={`Estado payout: ${data.store.payout_state ?? "Desconocido"}`} sx={{ bgcolor: "#deebdf", color: "#173a2d" }} />
+          </Stack>
+        </CardContent>
+      </Card>
+
+      {nextPlan && (
+        <Card
+          elevation={0}
+          sx={{
+            border: "1px solid #b6d4c2",
+            background: "linear-gradient(135deg, #1f4b3b 0%, #2a6a53 100%)",
+            color: "#fff",
+          }}
+        >
+          <CardContent>
+            <Typography variant="overline" sx={{ color: "rgba(255,255,255,0.72)", letterSpacing: "0.12em" }}>
+              PLAN SUPERIOR DISPONIBLE
+            </Typography>
+            <Typography variant="h5" sx={{ mt: 0.5, fontWeight: 900 }}>
+              {nextPlan.name}
+            </Typography>
+            <Typography variant="body2" sx={{ mt: 0.8, color: "rgba(255,255,255,0.82)" }}>
+              {nextPlan.description}
+            </Typography>
+            <Typography variant="h6" sx={{ mt: 1.2, fontWeight: 900 }}>
+              {money(nextPlan.amount)} / mes
+            </Typography>
+            {upgradeError && (
+              <Alert severity="error" sx={{ mt: 1.5, bgcolor: "rgba(255,255,255,0.12)", color: "#fff", "& .MuiAlert-icon": { color: "#fff" } }}>
+                {upgradeError}
+              </Alert>
+            )}
+            <Button
+              variant="contained"
+              disabled={upgrading}
+              onClick={handleUpgrade}
+              startIcon={upgrading ? <CircularProgress size={16} sx={{ color: "#1f4b3b" }} /> : undefined}
+              sx={{
+                mt: 2,
+                bgcolor: "#fff",
+                color: "#1f4b3b",
+                fontWeight: 700,
+                "&:hover": { bgcolor: "#e8f1ec" },
+                "&.Mui-disabled": { bgcolor: "rgba(255,255,255,0.7)", color: "#1f4b3b" },
+              }}
+            >
+              {upgrading ? "Redirigiendo..." : `Quiero actualizar al ${nextPlan.name}`}
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {isHighestPlan && (
+        <Card elevation={0} sx={{ border: "1px solid #d6e4da" }}>
+          <CardContent>
+            <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 0.8 }}>
+              <WorkspacePremiumRoundedIcon sx={{ color: "#1f4b3b" }} />
+              <Typography variant="h6" color="#173a2d">
+                Estas en nuestro plan mas alto
+              </Typography>
+            </Stack>
+            <Typography variant="body2">
+              Ya cuentas con todos los beneficios disponibles de Guander. ¿Tienes alguna idea o funcionalidad que te
+              gustaria ver en la plataforma? ¡Cuentanos!
+            </Typography>
+
+            {submitted ? (
+              <Alert severity="success" sx={{ mt: 2 }}>
+                ¡Gracias por tu recomendacion! La tendremos muy en cuenta.
+              </Alert>
+            ) : (
+              <Stack spacing={1.5} sx={{ mt: 2 }}>
+                <TextField
+                  multiline
+                  rows={3}
+                  fullWidth
+                  label="Tu idea o recomendacion"
+                  placeholder="Ej: Me gustaria poder programar descuentos automaticos por temporada..."
+                  value={recText}
+                  onChange={(e) => setRecText(e.target.value)}
+                  size="small"
+                />
+                <Button
+                  variant="contained"
+                  disabled={!recText.trim() || sending}
+                  onClick={handleSendRec}
+                  startIcon={sending ? <CircularProgress size={16} sx={{ color: "#fff" }} /> : undefined}
+                  sx={{ alignSelf: "flex-start", bgcolor: "#1f4b3b", "&:hover": { bgcolor: "#173a2d" } }}
+                >
+                  {sending ? "Enviando..." : "Enviar recomendacion"}
+                </Button>
+              </Stack>
+            )}
+          </CardContent>
+        </Card>
+      )}
+    </Stack>
   );
 }
 
@@ -666,7 +606,7 @@ function SidebarContent({
       </List>
 
       <Divider sx={{ my: 1.5 }} />
-      <Button fullWidth variant="contained" startIcon={<MonetizationOnRoundedIcon />} sx={{ bgcolor: "#1f4b3b", mb: 1 }}>
+      <Button fullWidth variant="contained" startIcon={<MonetizationOnRoundedIcon />} onClick={() => onSelect("suscripcion")} sx={{ bgcolor: "#1f4b3b", mb: 1 }}>
         Upgrade Plan
       </Button>
       <Button

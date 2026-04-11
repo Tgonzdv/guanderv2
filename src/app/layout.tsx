@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import "leaflet/dist/leaflet.css";
 import "./globals.css";
 import ThemeRegistry from "./components/ThemeRegistry";
 
@@ -16,6 +17,13 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Guander",
   description: "Encuentra los mejores lugares petfriendly cerca de ti",
+  icons: {
+    icon: [
+      { url: "/Marcador.png", type: "image/png" },
+    ],
+    shortcut: ["/Marcador.png"],
+    apple: [{ url: "/Marcador.png" }],
+  },
 };
 
 export default function RootLayout({
