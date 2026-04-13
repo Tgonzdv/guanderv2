@@ -6,8 +6,13 @@ import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
 import Typography from '@mui/material/Typography';
 import Chip from '@mui/material/Chip';
+import Divider from '@mui/material/Divider';
 import LocalOfferIcon from '@mui/icons-material/LocalOffer';
 import WorkspacePremiumIcon from '@mui/icons-material/WorkspacePremium';
+import StorefrontIcon from '@mui/icons-material/Storefront';
+import PersonIcon from '@mui/icons-material/Person';
+import RoomOutlinedIcon from '@mui/icons-material/RoomOutlined';
+import CategoryOutlinedIcon from '@mui/icons-material/CategoryOutlined';
 
 const TAG_GRADIENTS: Record<string, string> = {
   Tienda: 'linear-gradient(135deg, #2e7d32 0%, #43a047 100%)',
@@ -19,6 +24,9 @@ export interface OfferCardItem {
   title: string;
   subtitle: string;
   tag: "Profesional" | "Tienda";
+  entityName?: string;
+  entityCategory?: string;
+  entityAddress?: string;
 }
 
 interface ExclusiveOffersClientProps {
@@ -153,9 +161,44 @@ export default function ExclusiveOffersClient({ offers }: ExclusiveOffersClientP
                 <Typography variant="subtitle2" sx={{ fontWeight: 800, mb: 0.75, lineHeight: 1.4 }}>
                   {offer.title}
                 </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.6 }}>
+                <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.6, mb: 1.5 }}>
                   {offer.subtitle}
                 </Typography>
+
+                {/* Entity info */}
+                {(offer.entityName || offer.entityCategory || offer.entityAddress) && (
+                  <>
+                    <Divider sx={{ mb: 1.5 }} />
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.6 }}>
+                      {offer.entityName && (
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                          {offer.tag === 'Tienda'
+                            ? <StorefrontIcon sx={{ fontSize: 14, color: 'text.disabled' }} />
+                            : <PersonIcon sx={{ fontSize: 14, color: 'text.disabled' }} />}
+                          <Typography variant="caption" sx={{ fontWeight: 700, color: 'text.primary', lineHeight: 1.3 }}>
+                            {offer.entityName}
+                          </Typography>
+                        </Box>
+                      )}
+                      {offer.entityCategory && (
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                          <CategoryOutlinedIcon sx={{ fontSize: 13, color: 'text.disabled' }} />
+                          <Typography variant="caption" color="text.secondary" sx={{ lineHeight: 1.3 }}>
+                            {offer.entityCategory}
+                          </Typography>
+                        </Box>
+                      )}
+                      {offer.entityAddress && (
+                        <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 0.75 }}>
+                          <RoomOutlinedIcon sx={{ fontSize: 13, color: 'text.disabled', mt: '1px' }} />
+                          <Typography variant="caption" color="text.secondary" sx={{ lineHeight: 1.3 }}>
+                            {offer.entityAddress}
+                          </Typography>
+                        </Box>
+                      )}
+                    </Box>
+                  </>
+                )}
               </CardContent>
             </Card>
           ))}
