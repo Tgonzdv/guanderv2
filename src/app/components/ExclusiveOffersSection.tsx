@@ -73,7 +73,17 @@ async function loadOffersFromD1(): Promise<OfferCardItem[]> {
     if (profResult.status === "rejected") throw profResult.reason;
     if (storeResult.status === "rejected") throw storeResult.reason;
   }
-  return [...toOfferItems(profRows, "Profesional"), ...toOfferItems(storeRows, "Tienda")];
+  return interleave(toOfferItems(profRows, "Profesional"), toOfferItems(storeRows, "Tienda"));
+}
+
+function interleave(a: OfferCardItem[], b: OfferCardItem[]): OfferCardItem[] {
+  const result: OfferCardItem[] = [];
+  const max = Math.max(a.length, b.length);
+  for (let i = 0; i < max; i++) {
+    if (i < a.length) result.push(a[i]);
+    if (i < b.length) result.push(b[i]);
+  }
+  return result;
 }
 
 export default async function ExclusiveOffersSection() {

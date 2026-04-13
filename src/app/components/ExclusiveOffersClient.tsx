@@ -7,6 +7,7 @@ import CardContent from '@mui/material/CardContent';
 import Typography from '@mui/material/Typography';
 import Chip from '@mui/material/Chip';
 import Divider from '@mui/material/Divider';
+import Pagination from '@mui/material/Pagination';
 import LocalOfferIcon from '@mui/icons-material/LocalOffer';
 import WorkspacePremiumIcon from '@mui/icons-material/WorkspacePremium';
 import StorefrontIcon from '@mui/icons-material/Storefront';
@@ -35,14 +36,27 @@ interface ExclusiveOffersClientProps {
 
 const FILTERS = ["Todas", "Profesional", "Tienda"] as const;
 type OfferFilter = (typeof FILTERS)[number];
+const PAGE_SIZE = 9;
 
 export default function ExclusiveOffersClient({ offers }: ExclusiveOffersClientProps) {
   const [activeFilter, setActiveFilter] = useState<OfferFilter>("Todas");
+  const [page, setPage] = useState(1);
 
   const filteredOffers = useMemo(() => {
     if (activeFilter === "Todas") return offers;
     return offers.filter((o) => o.tag === activeFilter);
   }, [activeFilter, offers]);
+
+  const totalPages = Math.ceil(filteredOffers.length / PAGE_SIZE);
+  const pageOffers = useMemo(
+    () => filteredOffers.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
+    [filteredOffers, page]
+  );
+
+  function handleFilter(f: OfferFilter) {
+    setActiveFilter(f);
+    setPage(1);
+  }
 
   const counter = useMemo(() => ({
     Todas: offers.length,
@@ -83,7 +97,7 @@ export default function ExclusiveOffersClient({ offers }: ExclusiveOffersClientP
               <Chip
                 key={filter}
                 label={`${filter} (${counter[filter]})`}
-                onClick={() => setActiveFilter(filter)}
+                onClick={() => handleFilter(filter)}
                 color={activeFilter === filter ? 'primary' : 'default'}
                 variant={activeFilter === filter ? 'filled' : 'outlined'}
                 size="small"
@@ -96,14 +110,15 @@ export default function ExclusiveOffersClient({ offers }: ExclusiveOffersClientP
 
       {/* Cards grid */}
       {filteredOffers.length > 0 ? (
-        <Box
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', lg: 'repeat(4, 1fr)' },
-            gap: 2.5,
-          }}
-        >
-          {filteredOffers.map((offer, index) => (
+        <>
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', lg: 'repeat(3, 1fr)' },
+              gap: 2.5,
+            }}
+          >
+            {pageOffers.map((offer) => (
             <Card
               key={offer.id}
               variant="outlined"
@@ -202,7 +217,23 @@ export default function ExclusiveOffersClient({ offers }: ExclusiveOffersClientP
               </CardContent>
             </Card>
           ))}
-        </Box>
+          </Box>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+              <Pagination
+                count={totalPages}
+                page={page}
+                onChange={(_, v) => { setPage(v); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                color="primary"
+                shape="rounded"
+                showFirstButton
+                showLastButton
+              />
+            </Box>
+          )}
+        </>
       ) : (
         <Box
           sx={{
