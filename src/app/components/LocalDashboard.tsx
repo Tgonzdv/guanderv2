@@ -4,6 +4,7 @@ import { CloudflareD1Error, queryD1 } from "@/lib/cloudflare-d1";
 import { verifyToken } from "@/lib/auth";
 import { ensureSubscriptionBenefitsColumn } from "@/lib/subscription-benefits";
 import LocalDashboardClient from "../dashboard/store/LocalDashboardClient";
+import OnboardingRequestForm from "../dashboard/store/OnboardingRequestForm";
 import type {
   BenefitRow,
   CouponConsumptionRow,
@@ -268,6 +269,10 @@ export default async function LocalDashboard() {
     data = await loadDashboardData(user.id);
   } catch (err) {
     error = err instanceof CloudflareD1Error ? err.message : "No se pudo cargar el dashboard.";
+  }
+
+  if (!data) {
+    return <OnboardingRequestForm />;
   }
 
   return <LocalDashboardClient data={data} error={error} />;
