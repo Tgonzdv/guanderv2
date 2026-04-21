@@ -12,6 +12,7 @@ import {
   CardContent,
   Chip,
   CircularProgress,
+  Collapse,
   CssBaseline,
   Divider,
   Drawer,
@@ -44,6 +45,8 @@ import MonetizationOnRoundedIcon from "@mui/icons-material/MonetizationOnRounded
 import LogoutRoundedIcon from "@mui/icons-material/LogoutRounded";
 import StarRoundedIcon from "@mui/icons-material/StarRounded";
 import SearchIcon from "@mui/icons-material/Search";
+import ReplyRoundedIcon from "@mui/icons-material/ReplyRounded";
+import KeyboardArrowDownRoundedIcon from "@mui/icons-material/KeyboardArrowDownRounded";
 import { ThemeProvider, alpha, createTheme } from "@mui/material/styles";
 import type { DashboardData } from "./types";
 import {
@@ -343,6 +346,7 @@ function ReviewsSection({ data }: { data: DashboardData }) {
   const [draftReplyByComment, setDraftReplyByComment] = useState<Record<number, string>>({});
   const [sendingCommentId, setSendingCommentId] = useState<number | null>(null);
   const [feedbackByComment, setFeedbackByComment] = useState<Record<number, { type: "error" | "success"; message: string }>>({});
+  const [openReplyId, setOpenReplyId] = useState<number | null>(null);
   const [reviewSearch, setReviewSearch] = useState("");
   const [reviewSort, setReviewSort] = useState<"recientes" | "mas_valorado" | "menos_valorado">("recientes");
 
@@ -423,6 +427,7 @@ function ReviewsSection({ data }: { data: DashboardData }) {
         [commentId]: [...(prev[commentId] ?? []), newReply],
       }));
       setDraftReplyByComment((prev) => ({ ...prev, [commentId]: "" }));
+      setOpenReplyId(null);
       setFeedbackByComment((prev) => ({
         ...prev,
         [commentId]: { type: "success", message: "Respuesta enviada y notificación creada." },
@@ -515,35 +520,69 @@ function ReviewsSection({ data }: { data: DashboardData }) {
                   </Paper>
                 ))}
 
-                <TextField
+                {/* Toggle responder */}
+                <Button
                   size="small"
-                  multiline
-                  minRows={2}
-                  label="Responder reseña"
-                  value={draftReplyByComment[review.id_comment] ?? ""}
-                  onChange={(e) =>
-                    setDraftReplyByComment((prev) => ({
-                      ...prev,
-                      [review.id_comment]: e.target.value,
-                    }))
+                  variant="outlined"
+                  startIcon={<ReplyRoundedIcon />}
+                  endIcon={
+                    <KeyboardArrowDownRoundedIcon
+                      sx={{
+                        transition: "transform 0.25s",
+                        transform: openReplyId === review.id_comment ? "rotate(180deg)" : "rotate(0deg)",
+                      }}
+                    />
                   }
-                />
-                <Stack direction="row" justifyContent="flex-end">
-                  <Button
-                    size="small"
-                    variant="contained"
-                    sx={{ bgcolor: "#1f4b3b" }}
-                    onClick={() => void handleReply(review.id_comment)}
-                    disabled={sendingCommentId === review.id_comment}
-                  >
-                    {sendingCommentId === review.id_comment ? "Enviando..." : "Responder"}
-                  </Button>
-                </Stack>
-                {feedbackByComment[review.id_comment] && (
-                  <Alert severity={feedbackByComment[review.id_comment].type} sx={{ py: 0 }}>
-                    {feedbackByComment[review.id_comment].message}
-                  </Alert>
-                )}
+                  onClick={() =>
+                    setOpenReplyId((prev) =>
+                      prev === review.id_comment ? null : review.id_comment,
+                    )
+                  }
+                  sx={{
+                    alignSelf: "flex-start",
+                    color: "#1f4b3b",
+                    borderColor: "rgba(31,75,59,0.35)",
+                    fontWeight: 700,
+                    fontSize: "0.75rem",
+                    "&:hover": { borderColor: "#1f4b3b", bgcolor: "rgba(31,75,59,0.05)" },
+                  }}
+                >
+                  {openReplyId === review.id_comment ? "Cerrar" : "Responder"}
+                </Button>
+
+                <Collapse in={openReplyId === review.id_comment} unmountOnExit>
+                  <Stack spacing={1} sx={{ mt: 0.5 }}>
+                    <TextField
+                      size="small"
+                      multiline
+                      minRows={2}
+                      label="Responder reseña"
+                      value={draftReplyByComment[review.id_comment] ?? ""}
+                      onChange={(e) =>
+                        setDraftReplyByComment((prev) => ({
+                          ...prev,
+                          [review.id_comment]: e.target.value,
+                        }))
+                      }
+                    />
+                    <Stack direction="row" justifyContent="flex-end">
+                      <Button
+                        size="small"
+                        variant="contained"
+                        sx={{ bgcolor: "#1f4b3b" }}
+                        onClick={() => void handleReply(review.id_comment)}
+                        disabled={sendingCommentId === review.id_comment}
+                      >
+                        {sendingCommentId === review.id_comment ? "Enviando..." : "Enviar respuesta"}
+                      </Button>
+                    </Stack>
+                    {feedbackByComment[review.id_comment] && (
+                      <Alert severity={feedbackByComment[review.id_comment].type} sx={{ py: 0 }}>
+                        {feedbackByComment[review.id_comment].message}
+                      </Alert>
+                    )}
+                  </Stack>
+                </Collapse>
               </Stack>
 
               <Typography variant="caption" sx={{ mt: 1, display: "block" }}>
