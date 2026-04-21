@@ -539,21 +539,7 @@ export default function ProfesionalesClient({ initialProfessionals }: { initialP
         </div>
       )}
 
-      {/* ── Map picker ── */}
-      {editProfessional && (
-        <MapLocationPicker
-          open={showMapPicker}
-          initialLocation={formLocation}
-          onClose={() => setShowMapPicker(false)}
-          onConfirm={({ location, address }) => {
-            setFormLocation(location);
-            if (address) setFormAddress(address);
-            setShowMapPicker(false);
-          }}
-        />
-      )}
-
-      {/* ── Edit modal ── */}
+      {/* ── Edit modal ── */
       <Modal open={!!editProfessional} onClose={() => { if (!saving) setEditProfessional(null); }} maxWidthClass="max-w-xl">
         {editProfessional && (
           <>
@@ -803,6 +789,20 @@ export default function ProfesionalesClient({ initialProfessionals }: { initialP
           </>
         )}
       </Modal>
+
+      {/* ── Map picker (rendered after edit modal so it appears on top) ── */}
+      {editProfessional && (
+        <MapLocationPicker
+          open={showMapPicker}
+          initialLocation={formLocation}
+          onClose={() => setShowMapPicker(false)}
+          onConfirm={({ location, address }) => {
+            setFormLocation(location);
+            if (address) setFormAddress(address);
+            setShowMapPicker(false);
+          }}
+        />
+      )}
 
       {/* ── View modal ── */}
       <Modal open={!!viewProfessional && !editProfessional} onClose={() => setViewProfessional(null)}>
