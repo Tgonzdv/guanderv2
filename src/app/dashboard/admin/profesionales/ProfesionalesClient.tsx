@@ -539,7 +539,7 @@ export default function ProfesionalesClient({ initialProfessionals }: { initialP
         </div>
       )}
 
-      {/* ── Edit modal ── */
+      {/* ── Edit modal ── */}
       <Modal open={!!editProfessional} onClose={() => { if (!saving) setEditProfessional(null); }} maxWidthClass="max-w-xl">
         {editProfessional && (
           <>
