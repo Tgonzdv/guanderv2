@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { CloudflareD1Error, queryD1 } from "@/lib/cloudflare-d1";
 import { verifyToken } from "@/lib/auth";
 import { ensureSubscriptionBenefitsColumn } from "@/lib/subscription-benefits";
+import { ensureStoreReviewRepliesTable } from "@/lib/store-review-replies";
 import LocalDashboardClient from "../dashboard/store/LocalDashboardClient";
 import type {
   BenefitRow,
@@ -11,6 +12,7 @@ import type {
   DashboardData,
   NotificationRow,
   PurchaseRow,
+  ReviewReplyRow,
   ReviewRow,
   ServiceRow,
   StoreSummaryRow,
@@ -21,6 +23,7 @@ type NumberRow = { value: number | null };
 
 async function loadDashboardData(userId: number): Promise<DashboardData | null> {
   await ensureSubscriptionBenefitsColumn();
+  await ensureStoreReviewRepliesTable();
 
   const stores = await queryD1<StoreSummaryRow>(
     `SELECT
@@ -61,6 +64,7 @@ async function loadDashboardData(userId: number): Promise<DashboardData | null> 
     monthlySalesAmountRows,
     monthlySalesCountRows,
     reviews,
+    reviewReplies,
     purchases,
     coupons,
     benefits,
@@ -123,8 +127,25 @@ async function loadDashboardData(userId: number): Promise<DashboardData | null> 
       INNER JOIN user_data ud ON ud.id_user_data = u.fk_user_data
       WHERE cs.fk_store_id = ?
       ORDER BY DATETIME(cs.date) DESC
-      LIMIT 5`,
-      [store.id_store]
+      LIMIT 100`,
+      [store.id_store],
+      { revalidate: false }
+    ),
+    queryD1<ReviewReplyRow>(
+      `SELECT
+        csr.id_comment_reply,
+        csr.fk_comment_store AS fk_comment_id,
+        csr.body,
+        csr.date,
+        s.name AS responder_name
+      FROM comments_store_reply csr
+      INNER JOIN comments_store cs ON cs.id_comment = csr.fk_comment_store
+      INNER JOIN stores s ON s.fk_user = csr.fk_store_user
+      WHERE cs.fk_store_id = ?
+      ORDER BY DATETIME(csr.date) ASC
+      LIMIT 150`,
+      [store.id_store],
+      { revalidate: false }
     ),
     queryD1<PurchaseRow>(
       `SELECT
@@ -243,6 +264,7 @@ async function loadDashboardData(userId: number): Promise<DashboardData | null> 
     monthlySalesAmount: monthlySalesAmountRows[0]?.value ?? 0,
     monthlySalesCount: monthlySalesCountRows[0]?.value ?? 0,
     reviews,
+    reviewReplies,
     purchases,
     coupons,
     benefits,

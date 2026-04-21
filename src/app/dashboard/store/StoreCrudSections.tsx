@@ -8,7 +8,6 @@ import {
   Button,
   Card,
   CardContent,
-  Chip,
   Dialog,
   DialogActions,
   DialogContent,
@@ -30,7 +29,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import type { BenefitRow, CouponConsumptionRow, CouponRow, ServiceRow } from "./types";
+import type { BenefitRow, ServiceRow } from "./types";
 
 type ServiceItem = ServiceRow & {
   description: string;
@@ -50,17 +49,6 @@ type ScheduleOption = {
   week: string;
   weekend: string;
   sunday: string;
-};
-
-type CouponStateOption = {
-  id_coupon_state: number;
-  name: string;
-  description: string;
-};
-
-type CouponItem = CouponRow & {
-  description: string;
-  fk_coupon_state: number;
 };
 
 type CouponServiceOption = {
@@ -91,29 +79,8 @@ function when(value: string): string {
   return new Intl.DateTimeFormat("es-CO", { dateStyle: "medium" }).format(date);
 }
 
-function formatDateInput(value: string): string {
-  if (!value) return "";
-  return value.slice(0, 10);
-}
-
 async function readJson<T>(res: Response): Promise<T> {
   return (await res.json()) as T;
-}
-
-function toCodeChunk(value: string, fallback: string): string {
-  const cleaned = value
-    .toUpperCase()
-    .replace(/[^A-Z0-9]/g, "")
-    .slice(0, 8);
-  return cleaned || fallback;
-}
-
-function ensureGuanderCode(codeCoupon: string, couponName?: string): string {
-  if (/^GUANDER-[A-Z0-9]+$/.test(codeCoupon.toUpperCase())) {
-    return codeCoupon;
-  }
-  const codePart = toCodeChunk(codeCoupon || couponName || "CODIGO", "CODIGO");
-  return `GUANDER-${codePart}`;
 }
 
 function DeleteConfirmDialog({
@@ -602,24 +569,7 @@ export function StorePromotionsCrudSection({ initialItems }: { initialItems: Ben
   );
 }
 
-export function StoreCouponsCrudSection({
-  initialCoupons,
-  couponConsumptions,
-}: {
-  initialCoupons: CouponRow[];
-  couponConsumptions: CouponConsumptionRow[];
-}) {
-  const PAGE_SIZE = 10;
-  const [coupons, setCoupons] = useState<CouponItem[]>(
-    initialCoupons.map((coupon) => ({
-      ...coupon,
-      description: "",
-      fk_coupon_state: 0,
-    })),
-  );
-  const [couponStates, setCouponStates] = useState<CouponStateOption[]>([]);
-  const [editingId, setEditingId] = useState<number | null>(null);
-  const [error, setError] = useState("");
+export function StoreCouponsCrudSection() {
   const [consumptionError, setConsumptionError] = useState("");
   const [qrDataUrl, setQrDataUrl] = useState("");
   const [selectedQrCode, setSelectedQrCode] = useState("");
@@ -630,42 +580,6 @@ export function StoreCouponsCrudSection({
   const [selectedServiceAmount, setSelectedServiceAmount] = useState("");
   const [consumptionItems, setConsumptionItems] = useState<ConsumptionFormItem[]>([]);
   const [customerSummary, setCustomerSummary] = useState<{ name: string; email: string } | null>(null);
-  const [pendingDeleteCoupon, setPendingDeleteCoupon] = useState<CouponItem | null>(null);
-  const [couponPage, setCouponPage] = useState(1);
-  const [couponPageInput, setCouponPageInput] = useState("1");
-  const [consumptionPage, setConsumptionPage] = useState(1);
-  const [consumptionPageInput, setConsumptionPageInput] = useState("1");
-
-  const [form, setForm] = useState({
-    name: "",
-    description: "",
-    expirationDate: "",
-    pointReq: "0",
-    amount: "0",
-    codeCoupon: "",
-    couponStateId: "",
-    enabled: true,
-  });
-
-  async function loadCoupons() {
-    setError("");
-    const res = await fetch("/api/store/coupons", { cache: "no-store" });
-    const json = await readJson<{
-      error?: string;
-      data?: {
-        coupons: CouponItem[];
-        couponStates: CouponStateOption[];
-      };
-    }>(res);
-
-    if (!res.ok || !json.data) {
-      setError(json.error ?? "No se pudieron cargar cupones");
-      return;
-    }
-
-    setCoupons(json.data.coupons);
-    setCouponStates(json.data.couponStates);
-  }
 
   async function loadServiceOptions() {
     setConsumptionError("");
@@ -691,117 +605,8 @@ export function StoreCouponsCrudSection({
   }
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    void loadCoupons();
     void loadServiceOptions();
   }, []);
-
-  const effectiveStateId = useMemo(() => {
-    if (form.couponStateId) return form.couponStateId;
-    return couponStates[0] ? String(couponStates[0].id_coupon_state) : "";
-  }, [form.couponStateId, couponStates]);
-
-  const couponTotalPages = useMemo(
-    () => Math.max(1, Math.ceil(coupons.length / PAGE_SIZE)),
-    [coupons.length],
-  );
-
-  const consumptionTotalPages = useMemo(
-    () => Math.max(1, Math.ceil(couponConsumptions.length / PAGE_SIZE)),
-    [couponConsumptions.length],
-  );
-
-  const safeCouponPage = Math.min(couponPage, couponTotalPages);
-  const safeConsumptionPage = Math.min(consumptionPage, consumptionTotalPages);
-
-  const paginatedCoupons = useMemo(() => {
-    const start = (safeCouponPage - 1) * PAGE_SIZE;
-    return coupons.slice(start, start + PAGE_SIZE);
-  }, [coupons, safeCouponPage]);
-
-  const paginatedCouponConsumptions = useMemo(() => {
-    const start = (safeConsumptionPage - 1) * PAGE_SIZE;
-    return couponConsumptions.slice(start, start + PAGE_SIZE);
-  }, [couponConsumptions, safeConsumptionPage]);
-
-  function changeCouponPage(next: number) {
-    const clamped = Math.min(Math.max(next, 1), couponTotalPages);
-    setCouponPage(clamped);
-    setCouponPageInput(String(clamped));
-  }
-
-  function changeConsumptionPage(next: number) {
-    const clamped = Math.min(Math.max(next, 1), consumptionTotalPages);
-    setConsumptionPage(clamped);
-    setConsumptionPageInput(String(clamped));
-  }
-
-  async function handleSubmit() {
-    setError("");
-    const payload = {
-      idCoupon: editingId ?? undefined,
-      name: form.name,
-      description: form.description,
-      expirationDate: form.expirationDate,
-      pointReq: Number(form.pointReq),
-      amount: Number(form.amount),
-      codeCoupon: form.codeCoupon,
-      couponStateId: Number(effectiveStateId),
-      enabled: form.enabled,
-    };
-
-    const res = await fetch("/api/store/coupons", {
-      method: editingId ? "PUT" : "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-
-    const json = await readJson<{ error?: string }>(res);
-    if (!res.ok) {
-      setError(json.error ?? "No se pudo guardar el cupon");
-      return;
-    }
-
-    setEditingId(null);
-    setForm({
-      name: "",
-      description: "",
-      expirationDate: "",
-      pointReq: "0",
-      amount: "0",
-      codeCoupon: "",
-      couponStateId: "",
-      enabled: true,
-    });
-
-    await loadCoupons();
-  }
-
-  async function handleDelete(idCoupon: number) {
-    const res = await fetch(`/api/store/coupons?idCoupon=${idCoupon}`, {
-      method: "DELETE",
-    });
-    const json = await readJson<{ error?: string }>(res);
-    if (!res.ok) {
-      setError(json.error ?? "No se pudo eliminar el cupon");
-      return;
-    }
-    await loadCoupons();
-  }
-
-  function startEdit(coupon: CouponItem) {
-    setEditingId(coupon.id_coupon);
-    setForm({
-      name: coupon.name,
-      description: coupon.description,
-      expirationDate: formatDateInput(coupon.expiration_date),
-      pointReq: String(coupon.point_req),
-      amount: String(coupon.amount),
-      codeCoupon: coupon.code_coupon,
-      couponStateId: String(coupon.fk_coupon_state),
-      enabled: coupon.state === 1,
-    });
-  }
 
   const selectedService = useMemo(() => {
     if (!selectedServiceId) return null;
@@ -968,177 +773,6 @@ export function StoreCouponsCrudSection({
 
   return (
     <Stack spacing={2}>
-      <Card elevation={0} sx={{ border: "1px solid #d6e4da" }}>
-        <CardContent>
-          <Typography variant="h6" color="#173a2d">
-            Cupones
-          </Typography>
-          <Typography variant="body2" sx={{ mt: 0.5 }}>
-            Crea, edita y elimina cupones. Puedes generar un QR para cada codigo.
-          </Typography>
-
-          {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}
-
-          <Box sx={{ mt: 2, display: "grid", gap: 1.2, gridTemplateColumns: { xs: "1fr", md: "repeat(2, minmax(0, 1fr))" } }}>
-            <TextField label="Nombre" size="small" value={form.name} onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))} />
-            <TextField label="Codigo (opcional)" size="small" value={form.codeCoupon} onChange={(e) => setForm((p) => ({ ...p, codeCoupon: e.target.value }))} />
-            <TextField
-              label="Descripcion"
-              size="small"
-              value={form.description}
-              onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))}
-            />
-            <TextField
-              label="Fecha vencimiento"
-              type="date"
-              size="small"
-              InputLabelProps={{ shrink: true }}
-              value={form.expirationDate}
-              onChange={(e) => setForm((p) => ({ ...p, expirationDate: e.target.value }))}
-            />
-            <TextField label="Puntos" type="number" size="small" value={form.pointReq} onChange={(e) => setForm((p) => ({ ...p, pointReq: e.target.value }))} />
-            <TextField label="Monto" type="number" size="small" value={form.amount} onChange={(e) => setForm((p) => ({ ...p, amount: e.target.value }))} />
-            <FormControl size="small" fullWidth>
-              <InputLabel id="coupon-state-label">Estado de cupon</InputLabel>
-              <Select
-                labelId="coupon-state-label"
-                label="Estado de cupon"
-                value={effectiveStateId}
-                onChange={(e) => setForm((p) => ({ ...p, couponStateId: e.target.value }))}
-              >
-                {couponStates.map((state) => (
-                  <MenuItem key={state.id_coupon_state} value={String(state.id_coupon_state)}>
-                    {state.name}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            <FormControlLabel
-              control={<Switch checked={form.enabled} onChange={(e) => setForm((p) => ({ ...p, enabled: e.target.checked }))} />}
-              label="Cupon habilitado"
-            />
-          </Box>
-
-          <Stack direction="row" spacing={1} sx={{ mt: 1.8 }}>
-            <Button variant="contained" sx={{ bgcolor: "#1f4b3b" }} onClick={() => void handleSubmit()}>
-              {editingId ? "Actualizar cupon" : "Crear cupon"}
-            </Button>
-            {editingId && (
-              <Button variant="outlined" onClick={() => setEditingId(null)}>
-                Cancelar edicion
-              </Button>
-            )}
-          </Stack>
-
-          <Table size="small" sx={{ mt: 2 }}>
-            <TableHead>
-              <TableRow>
-                <TableCell>Cupon</TableCell>
-                <TableCell>Monto</TableCell>
-                <TableCell>Canjes</TableCell>
-                <TableCell>Vence</TableCell>
-                <TableCell>Estado</TableCell>
-                <TableCell align="center">Acciones</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {coupons.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={6}>Aun no has creado cupones.</TableCell>
-                </TableRow>
-              )}
-              {paginatedCoupons.map((coupon) => (
-                <TableRow key={coupon.id_coupon}>
-                  <TableCell>
-                    <Typography variant="body2" fontWeight={700}>{coupon.name}</Typography>
-                    <Typography variant="caption">{ensureGuanderCode(coupon.code_coupon, coupon.name)}</Typography>
-                  </TableCell>
-                  <TableCell>{money(coupon.amount)}</TableCell>
-                  <TableCell>{coupon.redemptions}</TableCell>
-                  <TableCell>{when(coupon.expiration_date)}</TableCell>
-                  <TableCell>
-                    <Chip
-                      size="small"
-                      label={coupon.coupon_state_name ?? (coupon.state === 1 ? "Activo" : "Inactivo")}
-                      sx={{ bgcolor: "#deebdf", color: "#173a2d" }}
-                    />
-                  </TableCell>
-                  <TableCell align="center">
-                    <Stack direction="row" spacing={1} justifyContent="center">
-                      <Button size="small" variant="outlined" onClick={() => startEdit(coupon)}>
-                        Editar
-                      </Button>
-                      <Button
-                        size="small"
-                        color="error"
-                        variant="outlined"
-                        onClick={() => setPendingDeleteCoupon(coupon)}
-                      >
-                        Eliminar
-                      </Button>
-                    </Stack>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-
-          {coupons.length > 0 && (
-            <Stack
-              direction={{ xs: "column", md: "row" }}
-              justifyContent="space-between"
-              alignItems={{ xs: "flex-start", md: "center" }}
-              spacing={1}
-              sx={{ mt: 1.4 }}
-            >
-              <Typography variant="caption" sx={{ color: "#4b675b" }}>
-                Pagina {safeCouponPage} de {couponTotalPages} · {coupons.length} registros
-              </Typography>
-              <Stack direction="row" spacing={1} alignItems="center">
-                <Button size="small" variant="outlined" disabled={safeCouponPage === 1} onClick={() => changeCouponPage(safeCouponPage - 1)}>
-                  Anterior
-                </Button>
-                <TextField
-                  size="small"
-                  label="Pagina"
-                  value={couponPageInput}
-                  onChange={(e) => setCouponPageInput(e.target.value)}
-                  sx={{ width: 100 }}
-                  inputProps={{ inputMode: "numeric" }}
-                />
-                <Button
-                  size="small"
-                  variant="outlined"
-                  onClick={() => {
-                    const parsed = Number(couponPageInput);
-                    if (!Number.isInteger(parsed)) return;
-                    changeCouponPage(parsed);
-                  }}
-                >
-                  Ir
-                </Button>
-                <Button size="small" variant="outlined" disabled={safeCouponPage >= couponTotalPages} onClick={() => changeCouponPage(safeCouponPage + 1)}>
-                  Siguiente
-                </Button>
-              </Stack>
-            </Stack>
-          )}
-
-          <DeleteConfirmDialog
-            open={Boolean(pendingDeleteCoupon)}
-            title="Eliminar cupon"
-            description={`Vas a eliminar el cupon ${pendingDeleteCoupon?.name ?? ""}. Esta accion no se puede deshacer.`}
-            onCancel={() => setPendingDeleteCoupon(null)}
-            onConfirm={() => {
-              if (pendingDeleteCoupon) {
-                void handleDelete(pendingDeleteCoupon.id_coupon);
-              }
-              setPendingDeleteCoupon(null);
-            }}
-          />
-        </CardContent>
-      </Card>
-
       <Card elevation={0} sx={{ border: "1px solid #d6e4da" }}>
         <CardContent>
           <Typography variant="h6" color="#173a2d">
@@ -1312,85 +946,6 @@ export function StoreCouponsCrudSection({
               Descargar QR
             </Button>
           </Stack>
-        </CardContent>
-      </Card>
-
-      <Card elevation={0} sx={{ border: "1px solid #d6e4da" }}>
-        <CardContent>
-          <Typography variant="h6" color="#173a2d">
-            Cupones consumidos
-          </Typography>
-          <Typography variant="body2" sx={{ mt: 0.5 }}>
-            Registro de clientes que canjearon cupones en tu local.
-          </Typography>
-          <Table size="small" sx={{ mt: 1.5 }}>
-            <TableHead>
-              <TableRow>
-                <TableCell>Cliente</TableCell>
-                <TableCell>Cupon</TableCell>
-                <TableCell>Codigo</TableCell>
-                <TableCell>Monto</TableCell>
-                <TableCell>Puntos</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {couponConsumptions.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={5}>Aun no hay consumos de cupones.</TableCell>
-                </TableRow>
-              )}
-              {paginatedCouponConsumptions.map((entry) => (
-                <TableRow key={entry.id_coupon_buy}>
-                  <TableCell>{entry.customer_name} {entry.customer_last_name}</TableCell>
-                  <TableCell>{entry.coupon_name}</TableCell>
-                  <TableCell>{entry.code_coupon}</TableCell>
-                  <TableCell>{money(entry.amount)}</TableCell>
-                  <TableCell>{entry.point_req}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-
-          {couponConsumptions.length > 0 && (
-            <Stack
-              direction={{ xs: "column", md: "row" }}
-              justifyContent="space-between"
-              alignItems={{ xs: "flex-start", md: "center" }}
-              spacing={1}
-              sx={{ mt: 1.4 }}
-            >
-              <Typography variant="caption" sx={{ color: "#4b675b" }}>
-                Pagina {safeConsumptionPage} de {consumptionTotalPages} · {couponConsumptions.length} registros
-              </Typography>
-              <Stack direction="row" spacing={1} alignItems="center">
-                <Button size="small" variant="outlined" disabled={safeConsumptionPage === 1} onClick={() => changeConsumptionPage(safeConsumptionPage - 1)}>
-                  Anterior
-                </Button>
-                <TextField
-                  size="small"
-                  label="Pagina"
-                  value={consumptionPageInput}
-                  onChange={(e) => setConsumptionPageInput(e.target.value)}
-                  sx={{ width: 100 }}
-                  inputProps={{ inputMode: "numeric" }}
-                />
-                <Button
-                  size="small"
-                  variant="outlined"
-                  onClick={() => {
-                    const parsed = Number(consumptionPageInput);
-                    if (!Number.isInteger(parsed)) return;
-                    changeConsumptionPage(parsed);
-                  }}
-                >
-                  Ir
-                </Button>
-                <Button size="small" variant="outlined" disabled={safeConsumptionPage >= consumptionTotalPages} onClick={() => changeConsumptionPage(safeConsumptionPage + 1)}>
-                  Siguiente
-                </Button>
-              </Stack>
-            </Stack>
-          )}
         </CardContent>
       </Card>
     </Stack>

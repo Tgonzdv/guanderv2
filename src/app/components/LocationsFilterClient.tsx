@@ -16,15 +16,6 @@ import L from "leaflet";
 import SearchIcon from "@mui/icons-material/Search";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 
-const CATEGORY_GRADIENTS: Record<string, { from: string; to: string }> = {
-  Veterinaria: { from: "#166534", to: "#34d399" },
-  "Pet Shop": { from: "#1d7a4f", to: "#43D696" },
-  "Cafetería": { from: "#b45309", to: "#f59e0b" },
-  Restaurante: { from: "#be185d", to: "#f472b6" },
-  Grooming: { from: "#7c3aed", to: "#a78bfa" },
-  Resort: { from: "#0f766e", to: "#34d399" },
-};
-
 export interface LocationItem {
   id: number;
   name: string;
@@ -233,7 +224,7 @@ function StoresMap({
             href="${escapeHtml(point.image)}"
             target="_blank"
             rel="noopener noreferrer"
-            style="display:inline-block;margin-top:9px;padding:8px 12px;border-radius:999px;background:linear-gradient(135deg,#166534 0%,#34d399 100%);color:#ffffff;text-decoration:none;font-size:12px;font-weight:800;letter-spacing:0.01em;box-shadow:0 6px 16px rgba(22,101,52,0.3);border:1px solid rgba(255,255,255,0.32);"
+            style="display:inline-block;margin-top:9px;padding:8px 12px;border-radius:999px;background:#78b593;color:#ffffff;text-decoration:none;font-size:12px;font-weight:800;letter-spacing:0.01em;box-shadow:0 6px 16px rgba(58,97,76,0.25);border:1px solid rgba(255,255,255,0.32);"
           >
             Ver foto completa ↗
           </a>`
@@ -331,11 +322,11 @@ function StoresMap({
     <Card
       variant="outlined"
       sx={{
-        border: "1px solid rgba(22,101,52,0.18)",
+        border: "1px solid rgba(79,129,103,0.24)",
         borderRadius: 2,
         overflow: "hidden",
-        background: "linear-gradient(180deg, rgba(237,248,242,0.96) 0%, rgba(255,255,255,0.98) 32%, #fff 100%)",
-        boxShadow: "0 16px 38px rgba(22,101,52,0.1)",
+        backgroundColor: "#f7fbf8",
+        boxShadow: "0 12px 30px rgba(79,129,103,0.12)",
       }}
     >
       <CardContent sx={{ p: { xs: 1.4, sm: 1.8 }, "&:last-child": { pb: { xs: 1.4, sm: 1.8 } } }}>
@@ -361,7 +352,7 @@ function StoresMap({
             height: "clamp(300px, 44vh, 430px)",
             borderRadius: 0,
             overflow: "hidden",
-            border: "1px solid rgba(22,101,52,0.2)",
+            border: "1px solid rgba(79,129,103,0.24)",
             boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.45), 0 8px 24px rgba(17,24,39,0.12)",
           }}
         />
@@ -413,7 +404,7 @@ export default function LocationsFilterClient({ locations }: LocationsFilterClie
 
   return (
     <>
-      <Card variant="outlined" sx={{ mb: 3, border: "1px solid", borderColor: "rgba(22,101,52,0.14)" }}>
+      <Card variant="outlined" sx={{ mb: 3, border: "1px solid", borderColor: "rgba(79,129,103,0.2)" }}>
         <CardContent sx={{ p: { xs: 2.5, sm: 3 }, "&:last-child": { pb: { xs: 2.5, sm: 3 } } }}>
           <Box
             sx={{
@@ -428,7 +419,7 @@ export default function LocationsFilterClient({ locations }: LocationsFilterClie
             <Typography
               variant="subtitle1"
               sx={{
-                color: "#14532d",
+                color: "#2d654b",
                 fontWeight: 800,
                 textTransform: "uppercase",
                 letterSpacing: "0.08em",
@@ -470,11 +461,11 @@ export default function LocationsFilterClient({ locations }: LocationsFilterClie
                 whiteSpace: "nowrap",
                 px: 3,
                 py: 1,
-                bgcolor: "#166534",
-                "&:hover": { bgcolor: "#14532d" },
+                bgcolor: "#78b593",
+                "&:hover": { bgcolor: "#6ca886" },
                 "&.Mui-disabled": {
-                  bgcolor: "rgba(22,101,52,0.25)",
-                  color: "rgba(20,83,45,0.55)",
+                  bgcolor: "rgba(120,181,147,0.35)",
+                  color: "rgba(45,101,75,0.6)",
                 },
               }}
             >
@@ -495,15 +486,15 @@ export default function LocationsFilterClient({ locations }: LocationsFilterClie
                   fontWeight: 700,
                   ...(activeCategory === cat
                     ? {
-                        bgcolor: "#166534",
+                        bgcolor: "#78b593",
                         color: "#ffffff",
-                        border: "1px solid #166534",
-                        "&:hover": { bgcolor: "#14532d" },
+                        border: "1px solid #78b593",
+                        "&:hover": { bgcolor: "#6ca886" },
                       }
                     : {
-                        color: "#14532d",
-                        border: "1px solid rgba(22,101,52,0.25)",
-                        "&:hover": { bgcolor: "rgba(22,101,52,0.08)" },
+                        color: "#2d654b",
+                        border: "1px solid rgba(79,129,103,0.3)",
+                        "&:hover": { bgcolor: "rgba(120,181,147,0.12)" },
                       }),
                 }}
               />
@@ -557,27 +548,27 @@ export default function LocationsFilterClient({ locations }: LocationsFilterClie
                 role="button"
                 tabIndex={0}
                 sx={{
-                  border: "1px solid rgba(22,101,52,0.13)",
+                  border: "1px solid rgba(79,129,103,0.2)",
                   overflow: "hidden",
                   borderRadius: 2,
-                  background: "linear-gradient(180deg, #ffffff 0%, #f4fbf7 100%)",
+                  backgroundColor: "#ffffff",
                   boxShadow:
                     selectedLocationId === location.id
-                      ? "0 14px 34px rgba(22,101,52,0.2)"
-                      : "0 6px 16px rgba(22,101,52,0.1)",
+                      ? "0 14px 30px rgba(79,129,103,0.2)"
+                      : "0 6px 14px rgba(79,129,103,0.12)",
                   transition: "transform 0.25s, box-shadow 0.25s, border-color 0.25s",
                   cursor: "pointer",
                   borderColor:
                     selectedLocationId === location.id
-                      ? "rgba(22,101,52,0.34)"
-                      : "rgba(22,101,52,0.13)",
+                      ? "rgba(79,129,103,0.34)"
+                      : "rgba(79,129,103,0.2)",
                   "&:hover": {
                     transform: "translateY(-5px)",
-                    boxShadow: "0 14px 34px rgba(22,101,52,0.18)",
-                    borderColor: "rgba(22,101,52,0.28)",
+                    boxShadow: "0 14px 28px rgba(79,129,103,0.2)",
+                    borderColor: "rgba(79,129,103,0.32)",
                   },
                   "&:focus-visible": {
-                    outline: "2px solid #166534",
+                    outline: "2px solid #78b593",
                     outlineOffset: 2,
                   },
                 }}
@@ -588,11 +579,11 @@ export default function LocationsFilterClient({ locations }: LocationsFilterClie
                       label={location.category}
                       size="small"
                       sx={{
-                        bgcolor: "rgba(22,101,52,0.1)",
-                        color: "#166534",
+                        bgcolor: "rgba(120,181,147,0.2)",
+                        color: "#2d654b",
                         fontWeight: 800,
                         fontSize: "0.65rem",
-                        border: "1px solid rgba(22,101,52,0.18)",
+                        border: "1px solid rgba(79,129,103,0.3)",
                       }}
                     />
                   </Box>
@@ -622,11 +613,11 @@ export default function LocationsFilterClient({ locations }: LocationsFilterClie
                       px: 0.9,
                       py: 0.45,
                       borderRadius: 99,
-                      bgcolor: "rgba(22,101,52,0.09)",
+                      bgcolor: "rgba(120,181,147,0.2)",
                     }}
                   >
-                    <LocationOnIcon sx={{ fontSize: 13, color: "#166534" }} />
-                    <Typography variant="caption" sx={{ color: "#166534", fontWeight: 700 }}>
+                    <LocationOnIcon sx={{ fontSize: 13, color: "#2d654b" }} />
+                    <Typography variant="caption" sx={{ color: "#2d654b", fontWeight: 700 }}>
                       {location.city}
                     </Typography>
                   </Box>
@@ -652,14 +643,14 @@ export default function LocationsFilterClient({ locations }: LocationsFilterClie
                 size="small"
                 sx={{
                   "& .MuiPaginationItem-root": {
-                    color: "#14532d",
-                    borderColor: "rgba(22,101,52,0.25)",
+                    color: "#2d654b",
+                    borderColor: "rgba(79,129,103,0.3)",
                   },
                   "& .MuiPaginationItem-root.Mui-selected": {
-                    bgcolor: "#166534",
+                    bgcolor: "#78b593",
                     color: "#fff",
-                    borderColor: "#166534",
-                    "&:hover": { bgcolor: "#14532d" },
+                    borderColor: "#78b593",
+                    "&:hover": { bgcolor: "#6ca886" },
                   },
                 }}
               />
@@ -675,7 +666,7 @@ export default function LocationsFilterClient({ locations }: LocationsFilterClie
             p: 5,
             textAlign: "center",
             border: "2px dashed",
-            borderColor: "rgba(22,101,52,0.2)",
+            borderColor: "rgba(79,129,103,0.28)",
             borderRadius: 2,
           }}
         >

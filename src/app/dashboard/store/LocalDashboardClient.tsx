@@ -87,7 +87,7 @@ const navItems: Array<{ id: DashboardSection; label: string; icon: React.ReactNo
   { id: "suscripcion", label: "Mi Suscripcion", icon: <WorkspacePremiumRoundedIcon /> },
   { id: "servicios", label: "Mis Servicios", icon: <MedicalServicesRoundedIcon /> },
   { id: "promociones", label: "Mis Promociones", icon: <CampaignRoundedIcon /> },
-  { id: "cupones", label: "Cupones y QR", icon: <ConfirmationNumberRoundedIcon /> },
+  { id: "cupones", label: "Generar QR", icon: <ConfirmationNumberRoundedIcon /> },
   { id: "reseñas", label: "Reseñas", icon: <ReviewsRoundedIcon /> },
   { id: "notificaciones", label: "Notificaciones", icon: <NotificationsActiveRoundedIcon /> },
 ];
@@ -325,15 +325,100 @@ function PromotionsSection({ data }: { data: DashboardData }) {
 }
 
 function CouponsSection({ data }: { data: DashboardData }) {
-  return (
-    <StoreCouponsCrudSection
-      initialCoupons={data.coupons}
-      couponConsumptions={data.couponConsumptions}
-    />
-  );
+  void data;
+  return <StoreCouponsCrudSection />;
 }
 
 function ReviewsSection({ data }: { data: DashboardData }) {
+  const PAGE_SIZE = 5;
+  const [repliesByComment, setRepliesByComment] = useState<Record<number, DashboardData["reviewReplies"]>>(() => {
+    const grouped: Record<number, DashboardData["reviewReplies"]> = {};
+    for (const reply of data.reviewReplies) {
+      grouped[reply.fk_comment_id] = [...(grouped[reply.fk_comment_id] ?? []), reply];
+    }
+    return grouped;
+  });
+  const [reviewsPage, setReviewsPage] = useState(1);
+  const [draftReplyByComment, setDraftReplyByComment] = useState<Record<number, string>>({});
+  const [sendingCommentId, setSendingCommentId] = useState<number | null>(null);
+  const [feedbackByComment, setFeedbackByComment] = useState<Record<number, { type: "error" | "success"; message: string }>>({});
+
+  const reviewsTotalPages = useMemo(
+    () => Math.max(1, Math.ceil(data.reviews.length / PAGE_SIZE)),
+    [data.reviews.length],
+  );
+  const safeReviewsPage = Math.min(reviewsPage, reviewsTotalPages);
+  const paginatedReviews = useMemo(() => {
+    const start = (safeReviewsPage - 1) * PAGE_SIZE;
+    return data.reviews.slice(start, start + PAGE_SIZE);
+  }, [data.reviews, safeReviewsPage]);
+
+  useEffect(() => {
+    if (reviewsPage > reviewsTotalPages) {
+      setReviewsPage(reviewsTotalPages);
+    }
+  }, [reviewsPage, reviewsTotalPages]);
+
+  async function handleReply(commentId: number) {
+    const body = (draftReplyByComment[commentId] ?? "").trim();
+    if (!body) {
+      setFeedbackByComment((prev) => ({
+        ...prev,
+        [commentId]: { type: "error", message: "Escribe una respuesta antes de enviar." },
+      }));
+      return;
+    }
+
+    setSendingCommentId(commentId);
+    setFeedbackByComment((prev) => {
+      const next = { ...prev };
+      delete next[commentId];
+      return next;
+    });
+
+    try {
+      const res = await fetch("/api/store/reviews/reply", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ commentId, body }),
+      });
+
+      const json = (await res.json().catch(() => ({}))) as {
+        error?: string;
+        data?: {
+          reply: DashboardData["reviewReplies"][number];
+        };
+      };
+
+      if (!res.ok || !json.data?.reply) {
+        setFeedbackByComment((prev) => ({
+          ...prev,
+          [commentId]: { type: "error", message: json.error ?? "No se pudo responder la reseña." },
+        }));
+        return;
+      }
+
+      const newReply = json.data.reply;
+
+      setRepliesByComment((prev) => ({
+        ...prev,
+        [commentId]: [...(prev[commentId] ?? []), newReply],
+      }));
+      setDraftReplyByComment((prev) => ({ ...prev, [commentId]: "" }));
+      setFeedbackByComment((prev) => ({
+        ...prev,
+        [commentId]: { type: "success", message: "Respuesta enviada y notificación creada." },
+      }));
+    } catch {
+      setFeedbackByComment((prev) => ({
+        ...prev,
+        [commentId]: { type: "error", message: "Error de red al responder la reseña." },
+      }));
+    } finally {
+      setSendingCommentId(null);
+    }
+  }
+
   return (
     <Card elevation={0} sx={{ border: "1px solid #d6e4da" }}>
       <CardContent>
@@ -342,7 +427,7 @@ function ReviewsSection({ data }: { data: DashboardData }) {
         </Typography>
         <Stack spacing={1.2} sx={{ mt: 2 }}>
           {data.reviews.length === 0 && <Typography variant="body2">Aun no hay reseñas registradas.</Typography>}
-          {data.reviews.map((review) => (
+          {paginatedReviews.map((review) => (
             <Paper key={review.id_comment} variant="outlined" sx={{ borderColor: "#e0ece4", p: 1.5, borderRadius: 2, bgcolor: "#f8fcf9" }}>
               <Stack direction="row" justifyContent="space-between" alignItems="flex-start" gap={1}>
                 <Box>
@@ -355,12 +440,85 @@ function ReviewsSection({ data }: { data: DashboardData }) {
                 </Box>
                 <Chip icon={<StarRoundedIcon />} label={`${review.stars}/5`} size="small" sx={{ bgcolor: "#deebdf", color: "#173a2d" }} />
               </Stack>
+
+              <Stack spacing={1} sx={{ mt: 1.2, pl: { xs: 0, sm: 1.5 }, borderLeft: { xs: "none", sm: "2px solid #dce9e0" } }}>
+                {(repliesByComment[review.id_comment] ?? []).map((reply) => (
+                  <Paper key={reply.id_comment_reply} variant="outlined" sx={{ p: 1, borderColor: "#dbe8df", bgcolor: "#fcfefd" }}>
+                    <Typography variant="caption" sx={{ color: "#1f4b3b", fontWeight: 700 }}>
+                      {reply.responder_name}
+                    </Typography>
+                    <Typography variant="body2" sx={{ mt: 0.3 }}>
+                      {reply.body}
+                    </Typography>
+                    <Typography variant="caption" sx={{ color: "#5a7368", display: "block", mt: 0.4 }}>
+                      {when(reply.date)}
+                    </Typography>
+                  </Paper>
+                ))}
+
+                <TextField
+                  size="small"
+                  multiline
+                  minRows={2}
+                  label="Responder reseña"
+                  value={draftReplyByComment[review.id_comment] ?? ""}
+                  onChange={(e) =>
+                    setDraftReplyByComment((prev) => ({
+                      ...prev,
+                      [review.id_comment]: e.target.value,
+                    }))
+                  }
+                />
+                <Stack direction="row" justifyContent="flex-end">
+                  <Button
+                    size="small"
+                    variant="contained"
+                    sx={{ bgcolor: "#1f4b3b" }}
+                    onClick={() => void handleReply(review.id_comment)}
+                    disabled={sendingCommentId === review.id_comment}
+                  >
+                    {sendingCommentId === review.id_comment ? "Enviando..." : "Responder"}
+                  </Button>
+                </Stack>
+                {feedbackByComment[review.id_comment] && (
+                  <Alert severity={feedbackByComment[review.id_comment].type} sx={{ py: 0 }}>
+                    {feedbackByComment[review.id_comment].message}
+                  </Alert>
+                )}
+              </Stack>
+
               <Typography variant="caption" sx={{ mt: 1, display: "block" }}>
                 {when(review.date)}
               </Typography>
             </Paper>
           ))}
         </Stack>
+
+        {data.reviews.length > PAGE_SIZE && (
+          <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mt: 2 }}>
+            <Typography variant="caption" sx={{ color: "#4b675b" }}>
+              Pagina {safeReviewsPage} de {reviewsTotalPages} · {data.reviews.length} reseñas
+            </Typography>
+            <Stack direction="row" spacing={1}>
+              <Button
+                size="small"
+                variant="outlined"
+                disabled={safeReviewsPage === 1}
+                onClick={() => setReviewsPage((prev) => Math.max(prev - 1, 1))}
+              >
+                Anterior
+              </Button>
+              <Button
+                size="small"
+                variant="outlined"
+                disabled={safeReviewsPage >= reviewsTotalPages}
+                onClick={() => setReviewsPage((prev) => Math.min(prev + 1, reviewsTotalPages))}
+              >
+                Siguiente
+              </Button>
+            </Stack>
+          </Stack>
+        )}
       </CardContent>
     </Card>
   );
@@ -873,7 +1031,7 @@ function sectionTitle(section: DashboardSection): string {
     case "promociones":
       return "Mis Promociones";
     case "cupones":
-      return "Cupones y QR";
+      return "Generar QR";
     case "reseñas":
       return "Reseñas";
     case "notificaciones":

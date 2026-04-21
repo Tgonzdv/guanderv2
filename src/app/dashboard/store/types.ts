@@ -25,6 +25,14 @@ export type ReviewRow = {
   customer_last_name: string;
 };
 
+export type ReviewReplyRow = {
+  id_comment_reply: number;
+  fk_comment_id: number;
+  body: string;
+  date: string;
+  responder_name: string;
+};
+
 export type PurchaseRow = {
   id_store_purchase: number;
   date: string;
@@ -97,6 +105,7 @@ export type DashboardData = {
   monthlySalesAmount: number;
   monthlySalesCount: number;
   reviews: ReviewRow[];
+  reviewReplies: ReviewReplyRow[];
   purchases: PurchaseRow[];
   coupons: CouponRow[];
   benefits: BenefitRow[];
