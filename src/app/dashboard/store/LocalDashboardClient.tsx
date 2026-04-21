@@ -343,6 +343,23 @@ function ReviewsSection({ data }: { data: DashboardData }) {
   const [draftReplyByComment, setDraftReplyByComment] = useState<Record<number, string>>({});
   const [sendingCommentId, setSendingCommentId] = useState<number | null>(null);
   const [feedbackByComment, setFeedbackByComment] = useState<Record<number, { type: "error" | "success"; message: string }>>({});
+  const [reviewSearch, setReviewSearch] = useState("");
+  const [reviewSort, setReviewSort] = useState<"recientes" | "mas_valorado" | "menos_valorado">("recientes");
+
+  const filteredSortedReviews = useMemo(() => {
+    const term = reviewSearch.trim().toLowerCase();
+    let list = term
+      ? data.reviews.filter(
+          (r) =>
+            r.body.toLowerCase().includes(term) ||
+            `${r.customer_name} ${r.customer_last_name}`.toLowerCase().includes(term),
+        )
+      : [...data.reviews];
+    if (reviewSort === "recientes") list.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    else if (reviewSort === "mas_valorado") list.sort((a, b) => b.stars - a.stars);
+    else list.sort((a, b) => a.stars - b.stars);
+    return list;
+  }, [data.reviews, reviewSearch, reviewSort]);
 
   const reviewsTotalPages = useMemo(
     () => Math.max(1, Math.ceil(filteredSortedReviews.length / PAGE_SIZE)),
