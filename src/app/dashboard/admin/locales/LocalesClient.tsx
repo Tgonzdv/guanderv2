@@ -761,6 +761,10 @@ export default function LocalesClient({
         image:
           imageUrl ||
           PLACEHOLDER_IMAGES[locales.length % PLACEHOLDER_IMAGES.length],
+        scheduleId: null,
+        scheduleWeek: formWeek,
+        scheduleWeekend: formWeekend,
+        scheduleSunday: formSunday,
       };
       setLocales((prev) => [newLocale, ...prev]);
       setShowAdd(false);
