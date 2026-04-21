@@ -6,6 +6,7 @@ import {
   LayoutDashboard,
   Users,
   Building2,
+  Briefcase,
   Shield,
   ShoppingBag,
   Settings,
@@ -23,6 +24,11 @@ const navItems = [
     label: "Gestión de locales",
     href: "/dashboard/admin/locales",
     icon: Building2,
+  },
+  {
+    label: "Gestión de Profesionales",
+    href: "/dashboard/admin/profesionales",
+    icon: Briefcase,
   },
   {
     label: "Planes de Suscripción",
