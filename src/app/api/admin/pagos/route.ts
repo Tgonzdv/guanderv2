@@ -48,24 +48,25 @@ export async function POST(request: NextRequest) {
     const { action, id_sub_payout, id_store_sub } = await request.json();
 
     if (action === "approve") {
-      // Approve payout
       await queryD1(
         "UPDATE sub_payout SET status = 'approved' WHERE id_sub_payout = ?",
         [id_sub_payout]
       );
-      
-      // Update store_sub
-      // Typically we'd update expiration date and upgrade_date too, but basic is to set status
+      // Unlock the store/professional by setting state_payout to 'activo'
       await queryD1(
-        "UPDATE store_sub SET state_payout = 'paid' WHERE id_store_sub = ?",
+        "UPDATE store_sub SET state_payout = 'activo' WHERE id_store_sub = ?",
         [id_store_sub]
       );
-      
       return NextResponse.json({ success: true, message: "Pago aprobado" });
     } else if (action === "reject") {
       await queryD1(
         "UPDATE sub_payout SET status = 'rejected' WHERE id_sub_payout = ?",
         [id_sub_payout]
+      );
+      // Allow the store to resubmit by resetting to previous state
+      await queryD1(
+        "UPDATE store_sub SET state_payout = 'inactivo' WHERE id_store_sub = ?",
+        [id_store_sub]
       );
       return NextResponse.json({ success: true, message: "Pago rechazado" });
     }

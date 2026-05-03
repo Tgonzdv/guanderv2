@@ -2769,12 +2769,16 @@ function SidebarContent({
   selected,
   onSelect,
   userRole,
+  isPending,
 }: {
   selected: DashboardSection;
   onSelect: (value: DashboardSection) => void;
   userRole?: string;
+  isPending?: boolean;
 }) {
   const router = useRouter();
+
+  const ALLOWED_WHEN_PENDING: DashboardSection[] = ["dashboard", "suscripcion"];
 
   function handleLogout() {
     localStorage.removeItem("user");
@@ -2802,23 +2806,41 @@ function SidebarContent({
         </Typography>
       </Paper>
 
+      {isPending && (
+        <Paper elevation={0} sx={{ mt: 1.5, px: 1.5, py: 1.2, bgcolor: "#fffbe6", border: "1px solid #f5c842", borderRadius: 2 }}>
+          <Typography variant="caption" sx={{ color: "#7a5c00", fontWeight: 700, display: "block", lineHeight: 1.4 }}>
+            ⏳ Pago en revisión
+          </Typography>
+          <Typography variant="caption" sx={{ color: "#7a5c00", lineHeight: 1.4 }}>
+            Tus funciones se habilitarán una vez que el administrador apruebe tu pago.
+          </Typography>
+        </Paper>
+      )}
+
       <List sx={{ mt: 1, flexGrow: 1 }}>
         {navItems.map((item) => {
           const active = selected === item.id;
+          const locked = isPending && !ALLOWED_WHEN_PENDING.includes(item.id);
           return (
             <ListItemButton
               key={item.id}
-              onClick={() => onSelect(item.id)}
+              onClick={() => !locked && onSelect(item.id)}
+              disabled={locked}
               sx={{
                 borderRadius: 2,
                 mb: 0.5,
                 bgcolor: active ? alpha("#1f4b3b", 0.12) : "transparent",
-                color: active ? "#173a2d" : "#4b675b",
+                color: locked ? "#b0c4bb" : active ? "#173a2d" : "#4b675b",
                 border: active ? "1px solid #c7dccc" : "1px solid transparent",
+                cursor: locked ? "not-allowed" : "pointer",
+                "&.Mui-disabled": { opacity: 0.45 },
               }}
             >
               <ListItemIcon sx={{ color: "inherit", minWidth: 36 }}>{item.icon}</ListItemIcon>
               <ListItemText primary={item.label} primaryTypographyProps={{ fontSize: 14, fontWeight: active ? 700 : 600 }} />
+              {locked && (
+                <Typography variant="caption" sx={{ color: "#b0c4bb", fontSize: 10, ml: 0.5 }}>🔒</Typography>
+              )}
             </ListItemButton>
           );
         })}
@@ -2844,6 +2866,14 @@ function SidebarContent({
 export default function LocalDashboardClient({ data, error, userRole }: { data: DashboardData | null; error: string | null; userRole?: string }) {
   const [selectedSection, setSelectedSection] = useState<DashboardSection>("dashboard");
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  const isPending = data?.store.payout_state === "pendiente";
+  const ALLOWED_WHEN_PENDING: DashboardSection[] = ["dashboard", "suscripcion"];
+
+  function handleSelectSection(section: DashboardSection) {
+    if (isPending && !ALLOWED_WHEN_PENDING.includes(section)) return;
+    setSelectedSection(section);
+  }
 
   const title = useMemo(() => sectionTitle(selectedSection), [selectedSection]);
 
@@ -2920,10 +2950,11 @@ export default function LocalDashboardClient({ data, error, userRole }: { data: 
             <SidebarContent
               selected={selectedSection}
               onSelect={(section) => {
-                setSelectedSection(section);
+                handleSelectSection(section);
                 setMobileOpen(false);
               }}
               userRole={userRole}
+              isPending={isPending}
             />
           </Drawer>
 
@@ -2940,7 +2971,7 @@ export default function LocalDashboardClient({ data, error, userRole }: { data: 
             }}
             open
           >
-            <SidebarContent selected={selectedSection} onSelect={setSelectedSection} userRole={userRole} />
+            <SidebarContent selected={selectedSection} onSelect={handleSelectSection} userRole={userRole} isPending={isPending} />
           </Drawer>
         </Box>
 
@@ -2968,7 +2999,37 @@ export default function LocalDashboardClient({ data, error, userRole }: { data: 
             </Stack>
           </Paper>
 
-          {renderSection(selectedSection, data, userRole)}
+          {isPending && (
+            <Paper
+              elevation={0}
+              sx={{
+                mb: 2,
+                p: 2,
+                bgcolor: "#fffbe6",
+                border: "1px solid #f5c842",
+                borderRadius: 2,
+                display: "flex",
+                alignItems: "flex-start",
+                gap: 1.5,
+              }}
+            >
+              <Typography sx={{ fontSize: 22 }}>⏳</Typography>
+              <Box>
+                <Typography variant="subtitle2" sx={{ color: "#7a5c00", fontWeight: 800 }}>
+                  Pago en revisión — Acceso limitado
+                </Typography>
+                <Typography variant="body2" sx={{ color: "#7a5c00", mt: 0.5 }}>
+                  Tu comprobante de pago fue recibido y está siendo revisado por el administrador.
+                  Una vez aprobado, todas las funciones de tu plan estarán habilitadas.
+                </Typography>
+              </Box>
+            </Paper>
+          )}
+
+          {isPending && !ALLOWED_WHEN_PENDING.includes(selectedSection)
+            ? <DashboardOverview data={data} userRole={userRole} />
+            : renderSection(selectedSection, data, userRole)
+          }
         </Box>
       </Box>
     </ThemeProvider>
