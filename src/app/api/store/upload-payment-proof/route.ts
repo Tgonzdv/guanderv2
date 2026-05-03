@@ -72,10 +72,10 @@ export async function POST(request: Request) {
       [paymentDate, paymentAmount, paymentDescription, base64File, storeSubId, userId]
     );
 
-    // Also logically make the store_sub state pending review
+    // Save proof URL — state_payout stays as-is until admin approves
     await queryD1(
       `UPDATE store_sub 
-       SET payment_proof = ?, state_payout = 'pendiente' 
+       SET payment_proof = ?
        WHERE id_store_sub = ?`,
       [base64File, storeSubId]
     );
