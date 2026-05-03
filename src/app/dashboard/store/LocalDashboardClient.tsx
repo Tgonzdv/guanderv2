@@ -981,6 +981,7 @@ type PaymentHistoryRow = {
 function SubscriptionSection({ data }: { data: DashboardData }) {
   const payoutState = data.store.payout_state;
   const payoutPending = payoutState !== "activo";
+  const router = useRouter();
   const [recText, setRecText] = useState("");
   const [recEmail, setRecEmail] = useState("");
   const [submitted, setSubmitted] = useState(false);
