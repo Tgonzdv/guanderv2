@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { CreditCard, Plus, X, RefreshCw, ChevronDown, ChevronUp, History } from "lucide-react";
+import { CreditCard, Plus, X, RefreshCw, ChevronDown, ChevronUp, History, CheckCircle, XCircle, AlertCircle, FileText } from "lucide-react";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 interface SubscriptionInstance {
@@ -398,6 +398,184 @@ function DetailDrawer({
   );
 }
 
+// ── Pagos y Aprobaciones Tab ───────────────────────────────────────────────
+interface AdminPayout {
+  id_sub_payout: number;
+  date: string;
+  amount: number;
+  description: string;
+  proof_url: string;
+  status: string;
+  fk_store_sub: number;
+  fk_user: number;
+  username: string;
+  store_name: string;
+  subscription_name: string;
+}
+
+const PAGO_STATUS_LABELS: Record<string, { label: string; color: string }> = {
+  pending:  { label: "Pendiente", color: "bg-yellow-100 text-yellow-800" },
+  approved: { label: "Aprobado",  color: "bg-green-100 text-green-800" },
+  rejected: { label: "Rechazado", color: "bg-red-100 text-red-700" },
+};
+
+function PagosYAprobaciones() {
+  const [payouts, setPayouts] = useState<AdminPayout[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchPayouts = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/admin/pagos");
+      if (!res.ok) throw new Error("Error al cargar los comprobantes");
+      const data = await res.json();
+      setPayouts(data.payouts || []);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Error desconocido");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { fetchPayouts(); }, [fetchPayouts]);
+
+  const handleStatus = async (id_sub_payout: number, fk_store_sub: number, action: "approve" | "reject") => {
+    try {
+      const res = await fetch("/api/admin/pagos", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action, id_sub_payout, id_store_sub: fk_store_sub }),
+      });
+      if (!res.ok) throw new Error("No se pudo procesar la acción");
+      fetchPayouts();
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : "Error");
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center py-16">
+        <div className="w-8 h-8 border-4 border-[var(--guander-forest)] border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  const pending = payouts.filter((p) => p.status === "pending").length;
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          {pending > 0 && (
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-800">
+              <AlertCircle size={13} /> {pending} pendiente{pending !== 1 ? "s" : ""} de aprobación
+            </span>
+          )}
+        </div>
+        <button
+          onClick={fetchPayouts}
+          className="flex items-center gap-2 px-4 py-2 rounded-xl border bg-white text-sm font-medium hover:bg-gray-50 transition-colors"
+        >
+          <RefreshCw size={15} />
+          Actualizar
+        </button>
+      </div>
+
+      {error && (
+        <div className="flex items-center gap-2 bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 mb-4 text-sm">
+          <AlertCircle size={16} /> {error}
+        </div>
+      )}
+
+      <div className="bg-white rounded-2xl border shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b bg-gray-50 text-gray-500 uppercase text-xs tracking-wide">
+                <th className="px-4 py-3 text-left font-semibold">ID</th>
+                <th className="px-4 py-3 text-left font-semibold">Fecha</th>
+                <th className="px-4 py-3 text-left font-semibold">Local / Profesional</th>
+                <th className="px-4 py-3 text-left font-semibold">Plan</th>
+                <th className="px-4 py-3 text-left font-semibold">Monto</th>
+                <th className="px-4 py-3 text-left font-semibold">Estado</th>
+                <th className="px-4 py-3 text-left font-semibold">Comprobante</th>
+                <th className="px-4 py-3 text-left font-semibold">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {payouts.length === 0 ? (
+                <tr>
+                  <td colSpan={8} className="text-center py-12 text-gray-400">
+                    No hay comprobantes de pago
+                  </td>
+                </tr>
+              ) : (
+                payouts.map((p) => {
+                  const statusCfg = PAGO_STATUS_LABELS[p.status] ?? { label: p.status, color: "bg-gray-100 text-gray-700" };
+                  return (
+                    <tr key={p.id_sub_payout} className="border-b last:border-0 hover:bg-gray-50 transition-colors">
+                      <td className="px-4 py-3 text-gray-400 text-xs">#{p.id_sub_payout}</td>
+                      <td className="px-4 py-3 text-gray-600">{new Date(p.date).toLocaleDateString("es-AR")}</td>
+                      <td className="px-4 py-3">
+                        <div className="font-medium text-[var(--guander-ink)]">{p.store_name}</div>
+                        <div className="text-xs text-gray-400">{p.username}</div>
+                      </td>
+                      <td className="px-4 py-3 text-gray-600">{p.subscription_name}</td>
+                      <td className="px-4 py-3 font-semibold text-[var(--guander-ink)]">{money(p.amount)}</td>
+                      <td className="px-4 py-3">
+                        <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${statusCfg.color}`}>
+                          {statusCfg.label}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        {p.proof_url ? (
+                          <a
+                            href={p.proof_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-1 text-xs text-[var(--guander-forest)] hover:underline font-medium"
+                          >
+                            <FileText size={13} /> Ver
+                          </a>
+                        ) : (
+                          <span className="text-gray-300 text-xs">—</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3">
+                        {p.status === "pending" ? (
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => handleStatus(p.id_sub_payout, p.fk_store_sub, "approve")}
+                              className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-green-600 text-white text-xs font-semibold hover:bg-green-700 transition-colors"
+                            >
+                              <CheckCircle size={12} /> Aprobar
+                            </button>
+                            <button
+                              onClick={() => handleStatus(p.id_sub_payout, p.fk_store_sub, "reject")}
+                              className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-red-500 text-red-600 text-xs font-semibold hover:bg-red-50 transition-colors"
+                            >
+                              <XCircle size={12} /> Rechazar
+                            </button>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-gray-300">—</span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Main component ─────────────────────────────────────────────────────────
 export default function SuscripcionesClient({
   initialInstances,
@@ -415,6 +593,7 @@ export default function SuscripcionesClient({
   const [sortAsc, setSortAsc] = useState(true);
   const [selected, setSelected] = useState<SubscriptionInstance | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [activeTab, setActiveTab] = useState<"suscripciones" | "pagos">("suscripciones");
 
   const refresh = async () => {
     setRefreshing(true);
@@ -479,6 +658,23 @@ export default function SuscripcionesClient({
         </button>
       </div>
 
+      {/* Tabs */}
+      <div className="flex border-b mb-6 bg-white rounded-t-2xl overflow-hidden border shadow-sm">
+        <button
+          onClick={() => setActiveTab("suscripciones")}
+          className={`px-6 py-3 text-sm font-semibold border-b-2 transition-colors ${activeTab === "suscripciones" ? "border-[var(--guander-forest)] text-[var(--guander-forest)]" : "border-transparent text-gray-500 hover:text-gray-700"}`}
+        >
+          Suscripciones
+        </button>
+        <button
+          onClick={() => setActiveTab("pagos")}
+          className={`px-6 py-3 text-sm font-semibold border-b-2 transition-colors ${activeTab === "pagos" ? "border-[var(--guander-forest)] text-[var(--guander-forest)]" : "border-transparent text-gray-500 hover:text-gray-700"}`}
+        >
+          Pagos y Aprobaciones
+        </button>
+      </div>
+
+      {activeTab === "suscripciones" && (<>
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         {[
@@ -553,14 +749,12 @@ export default function SuscripcionesClient({
                   Vencimiento <SortIcon col="expiration" />
                 </th>
                 <th className="px-4 py-3 text-left font-semibold">Pagos</th>
-                <th className="px-4 py-3 text-left font-semibold">Último pago</th>
-                <th className="px-4 py-3" />
               </tr>
             </thead>
             <tbody>
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="text-center py-12 text-gray-400">
+                  <td colSpan={7} className="text-center py-12 text-gray-400">
                     No se encontraron suscripciones
                   </td>
                 </tr>
@@ -598,20 +792,6 @@ export default function SuscripcionesClient({
                     <td className="px-4 py-3 text-center font-semibold">
                       {inst.payout_count}
                     </td>
-                    <td className="px-4 py-3 text-xs text-gray-500">
-                      {inst.last_payout_amount != null
-                        ? <><div className="font-medium">{money(inst.last_payout_amount)}</div><div className="text-gray-400">{fmtDate(inst.last_payout_date)}</div></>
-                        : <span className="text-gray-300">—</span>
-                      }
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <button
-                        onClick={(e) => { e.stopPropagation(); setSelected(inst); }}
-                        className="px-3 py-1 rounded-lg border text-xs font-medium hover:bg-[var(--guander-forest)] hover:text-white hover:border-[var(--guander-forest)] transition-colors"
-                      >
-                        Gestionar
-                      </button>
-                    </td>
                   </tr>
                 ))
               )}
@@ -619,6 +799,9 @@ export default function SuscripcionesClient({
           </table>
         </div>
       </div>
+      </>)}
+
+      {activeTab === "pagos" && <PagosYAprobaciones />}
 
       {/* Detail drawer */}
       {selected && (
