@@ -2895,11 +2895,13 @@ function SidebarContent({
   onSelect,
   userRole,
   isPending,
+  payoutState,
 }: {
   selected: DashboardSection;
   onSelect: (value: DashboardSection) => void;
   userRole?: string;
   isPending?: boolean;
+  payoutState?: string | null;
 }) {
   const router = useRouter();
 
@@ -3081,6 +3083,7 @@ export default function LocalDashboardClient({ data, error, userRole }: { data: 
               }}
               userRole={userRole}
               isPending={isPending}
+              payoutState={payoutState}
             />
           </Drawer>
 
@@ -3097,7 +3100,7 @@ export default function LocalDashboardClient({ data, error, userRole }: { data: 
             }}
             open
           >
-            <SidebarContent selected={selectedSection} onSelect={handleSelectSection} userRole={userRole} isPending={isPending} />
+            <SidebarContent selected={selectedSection} onSelect={handleSelectSection} userRole={userRole} isPending={isPending} payoutState={payoutState} />
           </Drawer>
         </Box>
 
