@@ -980,7 +980,6 @@ function SubscriptionSection({ data }: { data: DashboardData }) {
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [uploadingReceipt, setUploadingReceipt] = useState(false);
   const [uploadSuccess, setUploadSuccess] = useState(false);
-  const [receiptAmount, setReceiptAmount] = useState("");
   const [receiptDate, setReceiptDate] = useState(new Date().toISOString().slice(0, 10));
   const [receiptPlanId, setReceiptPlanId] = useState("");
 
@@ -1089,25 +1088,47 @@ function SubscriptionSection({ data }: { data: DashboardData }) {
     setUpgradeError(null);
     setUploadSuccess(false);
     try {
-      const formData = new FormData();
-      formData.append("file", receiptFile);
-      if (receiptAmount) formData.append("amount", receiptAmount);
-      if (receiptDate) formData.append("date", receiptDate);
-      if (receiptPlanId) formData.append("planId", receiptPlanId);
+      // 1. Upload file to Cloudinary directly (unsigned)
+      const cfForm = new FormData();
+      cfForm.append("file", receiptFile);
+      cfForm.append("upload_preset", "guander_unsigned");
+      cfForm.append("folder", "guander/comprobantes");
+      const cfRes = await fetch(
+        "https://api.cloudinary.com/v1_1/dwckkyqpw/image/upload",
+        { method: "POST", body: cfForm },
+      );
+      const cfData = await cfRes.json() as { secure_url?: string; error?: { message: string } };
+      if (!cfRes.ok || !cfData.secure_url) {
+        setUpgradeError(cfData.error?.message ?? "Error al subir la imagen");
+        return;
+      }
 
+      // 2. Derive amount from selected plan
+      const selectedPlan = receiptPlanId
+        ? data.planOptions.find((p) => String(p.id_subscription) === receiptPlanId)
+        : null;
+      const amount = selectedPlan?.amount ?? 0;
+
+      // 3. POST metadata + Cloudinary URL to our API
       const res = await fetch("/api/store/upload-payment-proof", {
         method: "POST",
-        body: formData,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          proofUrl: cfData.secure_url,
+          amount,
+          date: receiptDate,
+          planId: receiptPlanId || null,
+          planName: selectedPlan?.name ?? null,
+        }),
       });
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({})) as { error?: string };
-        setUpgradeError(err.error ?? "Error al subir comprobante");
+        setUpgradeError(err.error ?? "Error al registrar el comprobante");
         return;
       }
       setUploadSuccess(true);
       setReceiptFile(null);
-      setReceiptAmount("");
       setReceiptDate(new Date().toISOString().slice(0, 10));
       setReceiptPlanId("");
     } catch {
@@ -1267,17 +1288,16 @@ function SubscriptionSection({ data }: { data: DashboardData }) {
                     </Box>
                     <Box sx={{ flex: 1 }}>
                       <Typography variant="caption" sx={{ color: "#555", display: "block", mb: 0.5 }}>
-                        Monto abonado (ARS)
+                        Monto (ARS)
                       </Typography>
-                      <input
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        placeholder="0.00"
-                        value={receiptAmount}
-                        onChange={(e) => setReceiptAmount(e.target.value)}
-                        style={{ width: "100%", border: "1px solid #ccc", borderRadius: 6, padding: "6px 10px", fontSize: 13, outline: "none" }}
-                      />
+                      <Box sx={{ border: "1px solid #ccc", borderRadius: "6px", px: 1.5, py: 0.75, bgcolor: "#f5f5f5", fontSize: 13, color: "#333", minHeight: 34, display: "flex", alignItems: "center" }}>
+                        {receiptPlanId
+                          ? (() => {
+                              const p = data.planOptions.find((p) => String(p.id_subscription) === receiptPlanId);
+                              return p ? `$${p.amount}/mes` : "—";
+                            })()
+                          : "Seleccioná un plan"}
+                      </Box>
                     </Box>
                   </Stack>
 

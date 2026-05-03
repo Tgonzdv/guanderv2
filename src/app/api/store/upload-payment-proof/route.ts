@@ -18,11 +18,22 @@ export async function POST(request: Request) {
     let paymentDate = new Date().toISOString().slice(0, 10);
     let paymentDescription = "Suscripción - Carga Manual";
     
-    // Check if it's JSON (base64) or FormData
+    // Accept JSON body with Cloudinary URL (preferred) or legacy base64 FormData
     const contentType = request.headers.get("content-type") || "";
     if (contentType.includes("application/json")) {
-      const body = await request.json();
-      base64File = body.paymentProof;
+      const body = await request.json() as {
+        proofUrl?: string;
+        paymentProof?: string;
+        amount?: number;
+        date?: string;
+        planId?: string | null;
+        planName?: string | null;
+      };
+      base64File = body.proofUrl ?? body.paymentProof ?? "";
+      if (body.amount != null) paymentAmount = body.amount;
+      if (body.date) paymentDate = body.date;
+      if (body.planName) paymentDescription = body.planName;
+      else if (body.planId) paymentDescription = `Plan ID:${body.planId}`;
     } else if (contentType.includes("multipart/form-data")) {
       const formData = await request.formData();
       const file = formData.get("file") as File;
