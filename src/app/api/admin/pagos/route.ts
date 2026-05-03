@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminSession } from "@/lib/admin-auth";
 import { queryD1 } from "@/lib/cloudflare-d1";
-import { ensureSubPayoutTable, ensureStoreSubPayoutColumn } from "@/lib/sub-payouts";
+import { ensureSubPayoutTable, ensureStoreSubPayoutColumn, ensureSubPayoutColumns } from "@/lib/sub-payouts";
 
 export async function GET(request: NextRequest) {
   const session = await getAdminSession();
@@ -9,6 +9,7 @@ export async function GET(request: NextRequest) {
 
   try {
     await ensureSubPayoutTable();
+    await ensureSubPayoutColumns();
     await ensureStoreSubPayoutColumn();
     const payouts = await queryD1(
       `SELECT
@@ -44,6 +45,7 @@ export async function POST(request: NextRequest) {
 
   try {
     await ensureSubPayoutTable();
+    await ensureSubPayoutColumns();
     await ensureStoreSubPayoutColumn();
     const { action, id_sub_payout, id_store_sub } = await request.json();
 

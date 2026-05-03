@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { queryD1 } from "@/lib/cloudflare-d1";
 import { getStoreOwnerContext } from "@/lib/store-owner-context";
-import { ensureSubPayoutTable, ensureStoreSubPayoutColumn } from "@/lib/sub-payouts";
+import { ensureSubPayoutTable, ensureStoreSubPayoutColumn, ensureSubPayoutColumns } from "@/lib/sub-payouts";
 
 export async function POST(request: Request) {
   try {
@@ -62,6 +62,7 @@ export async function POST(request: Request) {
     }
 
     await ensureSubPayoutTable();
+    await ensureSubPayoutColumns();
     await ensureStoreSubPayoutColumn();
 
     // Insert into sub_payout to queue approval process for admin

@@ -17,6 +17,29 @@ export async function ensureSubPayoutTable(): Promise<void> {
     [],
     { revalidate: false },
   );
+  // Ensure columns exist in case table was created with an older schema
+  await ensureSubPayoutColumns();
+}
+
+export async function ensureSubPayoutColumns(): Promise<void> {
+  try {
+    await queryD1(
+      "ALTER TABLE sub_payout ADD COLUMN proof_url TEXT DEFAULT NULL",
+      [],
+      { revalidate: false },
+    );
+  } catch {
+    // Column already exists.
+  }
+  try {
+    await queryD1(
+      "ALTER TABLE sub_payout ADD COLUMN status TEXT DEFAULT 'pending'",
+      [],
+      { revalidate: false },
+    );
+  } catch {
+    // Column already exists.
+  }
 }
 
 export async function ensureStoreSubPayoutColumn(): Promise<void> {
