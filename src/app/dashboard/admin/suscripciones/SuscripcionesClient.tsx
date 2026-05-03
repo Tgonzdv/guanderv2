@@ -498,7 +498,7 @@ function PagosYAprobaciones() {
                 <th className="px-4 py-3 text-left font-semibold">ID</th>
                 <th className="px-4 py-3 text-left font-semibold">Fecha</th>
                 <th className="px-4 py-3 text-left font-semibold">Local / Profesional</th>
-                <th className="px-4 py-3 text-left font-semibold">Plan</th>
+                <th className="px-4 py-3 text-left font-semibold">Suscripción</th>
                 <th className="px-4 py-3 text-left font-semibold">Monto</th>
                 <th className="px-4 py-3 text-left font-semibold">Estado</th>
                 <th className="px-4 py-3 text-left font-semibold">Comprobante</th>
@@ -523,7 +523,12 @@ function PagosYAprobaciones() {
                         <div className="font-medium text-[var(--guander-ink)]">{p.store_name}</div>
                         <div className="text-xs text-gray-400">{p.username}</div>
                       </td>
-                      <td className="px-4 py-3 text-gray-600">{p.subscription_name}</td>
+                      <td className="px-4 py-3 text-gray-600">
+                        <div>{p.subscription_name}</div>
+                        {p.description && p.description !== "Suscripción - Carga Manual" && (
+                          <div className="text-xs text-gray-400">{p.description}</div>
+                        )}
+                      </td>
                       <td className="px-4 py-3 font-semibold text-[var(--guander-ink)]">{money(p.amount)}</td>
                       <td className="px-4 py-3">
                         <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${statusCfg.color}`}>
@@ -532,14 +537,28 @@ function PagosYAprobaciones() {
                       </td>
                       <td className="px-4 py-3">
                         {p.proof_url ? (
-                          <a
-                            href={p.proof_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-1 text-xs text-[var(--guander-forest)] hover:underline font-medium"
-                          >
-                            <FileText size={13} /> Ver
-                          </a>
+                          p.proof_url.startsWith("data:image") ? (
+                            <button
+                              onClick={() => {
+                                const w = window.open("", "_blank");
+                                if (w) { w.document.write(`<img src="${p.proof_url}" style="max-width:100%;height:auto" />`); }
+                              }}
+                              className="block"
+                              title="Ver comprobante"
+                            >
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img src={p.proof_url} alt="comprobante" className="w-16 h-16 object-cover rounded-lg border hover:opacity-80 transition-opacity cursor-pointer" />
+                            </button>
+                          ) : (
+                            <a
+                              href={p.proof_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-1 text-xs text-[var(--guander-forest)] hover:underline font-medium"
+                            >
+                              <FileText size={13} /> Ver
+                            </a>
+                          )
                         ) : (
                           <span className="text-gray-300 text-xs">—</span>
                         )}

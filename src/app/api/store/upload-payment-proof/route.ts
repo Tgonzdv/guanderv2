@@ -14,6 +14,9 @@ export async function POST(request: Request) {
     const { storeSubId, userId } = authContext.context;
     
     let base64File = "";
+    let paymentAmount = 0;
+    let paymentDate = new Date().toISOString().slice(0, 10);
+    let paymentDescription = "Suscripción - Carga Manual";
     
     // Check if it's JSON (base64) or FormData
     const contentType = request.headers.get("content-type") || "";
@@ -28,6 +31,12 @@ export async function POST(request: Request) {
         const buffer = Buffer.from(arrayBuffer);
         base64File = `data:${file.type};base64,${buffer.toString("base64")}`;
       }
+      const amountStr = formData.get("amount") as string | null;
+      if (amountStr) paymentAmount = parseFloat(amountStr) || 0;
+      const dateStr = formData.get("date") as string | null;
+      if (dateStr) paymentDate = dateStr;
+      const planId = formData.get("planId") as string | null;
+      if (planId) paymentDescription = `Plan ID:${planId}`;
     }
 
     if (!base64File) {
@@ -49,8 +58,8 @@ export async function POST(request: Request) {
     // Insert into sub_payout to queue approval process for admin
     await queryD1(
       `INSERT INTO sub_payout (date, amount, description, proof_url, status, fk_store_sub, fk_user)
-       VALUES (datetime('now'), 0, 'Suscripción - Carga Manual', ?, 'pending', ?, ?)`,
-      [base64File, storeSubId, userId]
+       VALUES (?, ?, ?, ?, 'pending', ?, ?)`,
+      [paymentDate, paymentAmount, paymentDescription, base64File, storeSubId, userId]
     );
 
     // Also logically make the store_sub state pending review

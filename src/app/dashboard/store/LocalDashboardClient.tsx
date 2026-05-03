@@ -980,6 +980,9 @@ function SubscriptionSection({ data }: { data: DashboardData }) {
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [uploadingReceipt, setUploadingReceipt] = useState(false);
   const [uploadSuccess, setUploadSuccess] = useState(false);
+  const [receiptAmount, setReceiptAmount] = useState("");
+  const [receiptDate, setReceiptDate] = useState(new Date().toISOString().slice(0, 10));
+  const [receiptPlanId, setReceiptPlanId] = useState("");
 
   const currentAmount = data.store.plan_amount ?? 0;
   const sortedPlans = [...data.planOptions].sort((a, b) => a.amount - b.amount);
@@ -1088,6 +1091,9 @@ function SubscriptionSection({ data }: { data: DashboardData }) {
     try {
       const formData = new FormData();
       formData.append("file", receiptFile);
+      if (receiptAmount) formData.append("amount", receiptAmount);
+      if (receiptDate) formData.append("date", receiptDate);
+      if (receiptPlanId) formData.append("planId", receiptPlanId);
 
       const res = await fetch("/api/store/upload-payment-proof", {
         method: "POST",
@@ -1101,6 +1107,9 @@ function SubscriptionSection({ data }: { data: DashboardData }) {
       }
       setUploadSuccess(true);
       setReceiptFile(null);
+      setReceiptAmount("");
+      setReceiptDate(new Date().toISOString().slice(0, 10));
+      setReceiptPlanId("");
     } catch {
       setUpgradeError("Error de red. Verificá tu conexión e intentá de nuevo.");
     } finally {
@@ -1238,9 +1247,60 @@ function SubscriptionSection({ data }: { data: DashboardData }) {
               </Stack>
               
               <Box sx={{ mt: 3, p: 2, border: '1px dashed #b6d4c2', borderRadius: 2, bgcolor: '#f8fcf9' }}>
-                <Typography variant="subtitle2" sx={{ color: "#173a2d", mb: 1, fontWeight: 'bold' }}>
+                <Typography variant="subtitle2" sx={{ color: "#173a2d", mb: 2, fontWeight: 'bold' }}>
                   Subir Comprobante de Pago Manual (PDF, JPG, PNG)
                 </Typography>
+
+                {/* Mini form */}
+                <Stack spacing={1.5} sx={{ mb: 2 }}>
+                  <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5}>
+                    <Box sx={{ flex: 1 }}>
+                      <Typography variant="caption" sx={{ color: "#555", display: "block", mb: 0.5 }}>
+                        Fecha de pago
+                      </Typography>
+                      <input
+                        type="date"
+                        value={receiptDate}
+                        onChange={(e) => setReceiptDate(e.target.value)}
+                        style={{ width: "100%", border: "1px solid #ccc", borderRadius: 6, padding: "6px 10px", fontSize: 13, outline: "none" }}
+                      />
+                    </Box>
+                    <Box sx={{ flex: 1 }}>
+                      <Typography variant="caption" sx={{ color: "#555", display: "block", mb: 0.5 }}>
+                        Monto abonado (ARS)
+                      </Typography>
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        placeholder="0.00"
+                        value={receiptAmount}
+                        onChange={(e) => setReceiptAmount(e.target.value)}
+                        style={{ width: "100%", border: "1px solid #ccc", borderRadius: 6, padding: "6px 10px", fontSize: 13, outline: "none" }}
+                      />
+                    </Box>
+                  </Stack>
+
+                  <Box>
+                    <Typography variant="caption" sx={{ color: "#555", display: "block", mb: 0.5 }}>
+                      Suscripción solicitada
+                    </Typography>
+                    <select
+                      value={receiptPlanId}
+                      onChange={(e) => setReceiptPlanId(e.target.value)}
+                      style={{ width: "100%", border: "1px solid #ccc", borderRadius: 6, padding: "6px 10px", fontSize: 13, outline: "none", background: "#fff" }}
+                    >
+                      <option value="">— Seleccioná un plan —</option>
+                      {data.planOptions.map((p) => (
+                        <option key={p.id_subscription} value={p.id_subscription}>
+                          {p.name} — ${p.amount}/mes
+                        </option>
+                      ))}
+                    </select>
+                  </Box>
+                </Stack>
+
+                {/* File picker */}
                 <Stack direction="row" spacing={2} alignItems="center">
                   <Button variant="outlined" component="label" disabled={uploadingReceipt}>
                     Seleccionar Archivo
