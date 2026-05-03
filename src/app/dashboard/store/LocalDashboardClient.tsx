@@ -221,7 +221,7 @@ function PanelCard({ title, subtitle, value }: { title: string; subtitle?: strin
 
 function DashboardOverview({ data, userRole }: { data: DashboardData; userRole?: string }) {
   const avgStars = data.avgStoreRating > 0 ? data.avgStoreRating.toFixed(1) : data.store.stars.toFixed(1);
-  const payoutPending = data.store.payout_state === "pendiente";
+  const payoutPending = data.store.payout_state !== "activo";
   const planLimits = getPlanLimitsFromBenefits(data.store.plan_benefits);
   const maxPhotos = planLimits?.maxPhotos ?? null;
 
@@ -979,7 +979,8 @@ type PaymentHistoryRow = {
 };
 
 function SubscriptionSection({ data }: { data: DashboardData }) {
-  const payoutPending = data.store.payout_state === "pendiente";
+  const payoutState = data.store.payout_state;
+  const payoutPending = payoutState !== "activo";
   const [recText, setRecText] = useState("");
   const [recEmail, setRecEmail] = useState("");
   const [submitted, setSubmitted] = useState(false);
@@ -1152,6 +1153,8 @@ function SubscriptionSection({ data }: { data: DashboardData }) {
       setReceiptFile(null);
       setReceiptDate(new Date().toISOString().slice(0, 10));
       setReceiptPlanId("");
+      // Reload so the server re-fetches payout_state and the dashboard lock applies immediately
+      router.refresh();
     } catch {
       setUpgradeError("Error de red. Verificá tu conexión e intentá de nuevo.");
     } finally {
@@ -2930,10 +2933,12 @@ function SidebarContent({
       {isPending && (
         <Paper elevation={0} sx={{ mt: 1.5, px: 1.5, py: 1.2, bgcolor: "#fffbe6", border: "1px solid #f5c842", borderRadius: 2 }}>
           <Typography variant="caption" sx={{ color: "#7a5c00", fontWeight: 700, display: "block", lineHeight: 1.4 }}>
-            ⏳ Pago en revisión
+            {payoutState === "pendiente" ? "⏳ Pago en revisión" : "🔒 Acceso pendiente de pago"}
           </Typography>
           <Typography variant="caption" sx={{ color: "#7a5c00", lineHeight: 1.4 }}>
-            Tus funciones se habilitarán una vez que el administrador apruebe tu pago.
+            {payoutState === "pendiente"
+              ? "Tus funciones se habilitarán una vez que el administrador apruebe tu pago."
+              : "Para acceder al panel, realizá el pago y subí tu comprobante en la sección Suscripción."}
           </Typography>
         </Paper>
       )}
@@ -2984,8 +2989,10 @@ function SidebarContent({
 export default function LocalDashboardClient({ data, error, userRole }: { data: DashboardData | null; error: string | null; userRole?: string }) {
   const [selectedSection, setSelectedSection] = useState<DashboardSection>("dashboard");
   const [mobileOpen, setMobileOpen] = useState(false);
+  const router = useRouter();
 
-  const isPending = data?.store.payout_state === "pendiente";
+  const payoutState = data?.store.payout_state;
+  const isPending = payoutState !== "activo";
   const ALLOWED_WHEN_PENDING: DashboardSection[] = ["dashboard", "suscripcion"];
 
   function handleSelectSection(section: DashboardSection) {
@@ -3131,14 +3138,15 @@ export default function LocalDashboardClient({ data, error, userRole }: { data: 
                 gap: 1.5,
               }}
             >
-              <Typography sx={{ fontSize: 22 }}>⏳</Typography>
+              <Typography sx={{ fontSize: 22 }}>{payoutState === "pendiente" ? "⏳" : "🔒"}</Typography>
               <Box>
                 <Typography variant="subtitle2" sx={{ color: "#7a5c00", fontWeight: 800 }}>
-                  Pago en revisión — Acceso limitado
+                  {payoutState === "pendiente" ? "Pago en revisión — Acceso limitado" : "Acceso pendiente de aprobación"}
                 </Typography>
                 <Typography variant="body2" sx={{ color: "#7a5c00", mt: 0.5 }}>
-                  Tu comprobante de pago fue recibido y está siendo revisado por el administrador.
-                  Una vez aprobado, todas las funciones de tu plan estarán habilitadas.
+                  {payoutState === "pendiente"
+                    ? "Tu comprobante de pago fue recibido y está siendo revisado por el administrador. Una vez aprobado, todas las funciones de tu plan estarán habilitadas."
+                    : "Para acceder a todas las funciones, realizá el pago de tu suscripción y subí el comprobante en la sección Suscripción. El acceso se habilita tras la aprobación del administrador."}
                 </Typography>
               </Box>
             </Paper>

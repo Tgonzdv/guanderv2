@@ -31,6 +31,7 @@ export async function GET(request: NextRequest) {
        LEFT JOIN professionals pr ON pr.fk_store_sub_id = ssub.id_store_sub
        LEFT JOIN type_service pr_ts ON pr_ts.id_type_service = pr.fk_type_service
        LEFT JOIN subscription sub ON ssub.fk_subscription_id = sub.id_subscription
+       GROUP BY sp.id_sub_payout
        ORDER BY sp.id_sub_payout DESC`
     );
     return NextResponse.json({ payouts });
