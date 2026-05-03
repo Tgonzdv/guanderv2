@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import { verifyToken } from "@/lib/auth";
 
 interface AdminSession {
   id: number;
@@ -9,9 +10,28 @@ interface AdminSession {
 
 export async function getAdminSession(): Promise<AdminSession | null> {
   const cookieStore = await cookies();
+
+  // Primary: check the JWT token cookie used by the main auth system
+  const token = cookieStore.get("token")?.value;
+  if (token) {
+    try {
+      const payload = verifyToken(token);
+      if (payload && payload.role === "admin") {
+        return {
+          id: payload.id,
+          name: payload.email ?? "Administrador",
+          email: payload.email ?? "",
+          role: "admin",
+        };
+      }
+    } catch {
+      // invalid token, fall through
+    }
+  }
+
+  // Fallback: legacy admin_session cookie
   const session = cookieStore.get("admin_session");
   if (!session) return null;
-
   try {
     return JSON.parse(atob(session.value)) as AdminSession;
   } catch {

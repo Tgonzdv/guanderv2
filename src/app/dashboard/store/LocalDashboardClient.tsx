@@ -2968,9 +2968,6 @@ function SidebarContent({
       </List>
 
       <Divider sx={{ my: 1.5 }} />
-      <Button fullWidth variant="contained" startIcon={<MonetizationOnRoundedIcon />} onClick={() => onSelect("suscripcion")} sx={{ bgcolor: "#1f4b3b", mb: 1 }}>
-        Upgrade Plan
-      </Button>
       <Button
         fullWidth
         variant="outlined"
