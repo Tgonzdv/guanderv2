@@ -429,8 +429,8 @@ function PagosYAprobaciones() {
     setError(null);
     try {
       const res = await fetch("/api/admin/pagos");
-      if (!res.ok) throw new Error("Error al cargar los comprobantes");
-      const data = await res.json();
+      const data = await res.json() as { payouts?: AdminPayout[]; error?: string };
+      if (!res.ok) throw new Error(data.error ?? "Error al cargar los comprobantes");
       setPayouts(data.payouts || []);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Error desconocido");

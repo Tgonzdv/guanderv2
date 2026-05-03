@@ -22,15 +22,15 @@ export async function GET(request: NextRequest) {
          sp.fk_store_sub,
          sp.fk_user,
          u.username,
-         COALESCE(st.name, ts.name) as store_name,
+         COALESCE(st.name, pr_ts.name, 'Sin nombre') as store_name,
          sub.name as subscription_name
        FROM sub_payout sp
-       JOIN users u ON sp.fk_user = u.id_user
-       JOIN store_sub ssub ON sp.fk_store_sub = ssub.id_store_sub
+       LEFT JOIN users u ON sp.fk_user = u.id_user
+       LEFT JOIN store_sub ssub ON sp.fk_store_sub = ssub.id_store_sub
        LEFT JOIN stores st ON st.fk_store_sub_id = ssub.id_store_sub
-       LEFT JOIN professionals pr ON pr.fk_store_sub_id = ssub.id_store_sub AND st.id_store IS NULL
-       LEFT JOIN type_service ts ON ts.id_type_service = pr.fk_type_service
-       JOIN subscription sub ON ssub.fk_subscription_id = sub.id_subscription
+       LEFT JOIN professionals pr ON pr.fk_store_sub_id = ssub.id_store_sub
+       LEFT JOIN type_service pr_ts ON pr_ts.id_type_service = pr.fk_type_service
+       LEFT JOIN subscription sub ON ssub.fk_subscription_id = sub.id_subscription
        ORDER BY sp.id_sub_payout DESC`
     );
     return NextResponse.json({ payouts });
