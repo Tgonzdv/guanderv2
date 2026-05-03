@@ -22,11 +22,20 @@ export async function ensureSubPayoutTable(): Promise<void> {
 export async function ensureStoreSubPayoutColumn(): Promise<void> {
   try {
     await queryD1(
-      "ALTER TABLE store_sub ADD COLUMN state_payout TEXT DEFAULT 'pending'",
+      "ALTER TABLE store_sub ADD COLUMN state_payout TEXT DEFAULT 'inactivo'",
       [],
       { revalidate: false },
     );
   } catch {
-    // Column already exists or ALTER not supported.
+    // Column already exists.
+  }
+  try {
+    await queryD1(
+      "ALTER TABLE store_sub ADD COLUMN payment_proof TEXT DEFAULT NULL",
+      [],
+      { revalidate: false },
+    );
+  } catch {
+    // Column already exists.
   }
 }

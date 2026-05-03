@@ -3,8 +3,6 @@ import { queryD1 } from "@/lib/cloudflare-d1";
 import { getStoreOwnerContext } from "@/lib/store-owner-context";
 import { ensureSubPayoutTable, ensureStoreSubPayoutColumn } from "@/lib/sub-payouts";
 
-export const runtime = "nodejs";
-
 export async function POST(request: Request) {
   try {
     const authContext = await getStoreOwnerContext();
@@ -85,7 +83,7 @@ export async function POST(request: Request) {
   } catch (error: any) {
     console.error("Error al subir comprobante:", error);
     return NextResponse.json(
-      { error: "No autorizado o error interno.", details: error.message },
+      { error: error?.message ?? "Error interno del servidor" },
       { status: 500 }
     );
   }

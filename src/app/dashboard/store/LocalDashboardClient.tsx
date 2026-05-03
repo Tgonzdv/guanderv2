@@ -969,6 +969,15 @@ function NotificationsSection({ data }: { data: DashboardData }) {
   );
 }
 
+type PaymentHistoryRow = {
+  id_sub_payout: number;
+  date: string;
+  amount: number;
+  description: string | null;
+  status: string;
+  proof_url: string | null;
+};
+
 function SubscriptionSection({ data }: { data: DashboardData }) {
   const payoutPending = data.store.payout_state === "pendiente";
   const [recText, setRecText] = useState("");
@@ -982,6 +991,18 @@ function SubscriptionSection({ data }: { data: DashboardData }) {
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [receiptDate, setReceiptDate] = useState(new Date().toISOString().slice(0, 10));
   const [receiptPlanId, setReceiptPlanId] = useState("");
+  const [paymentHistory, setPaymentHistory] = useState<PaymentHistoryRow[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+  const [showTransferInfo, setShowTransferInfo] = useState(false);
+
+  useEffect(() => {
+    setLoadingHistory(true);
+    fetch("/api/store/payments")
+      .then((r) => r.json())
+      .then((d: { payments?: PaymentHistoryRow[] }) => setPaymentHistory(d.payments ?? []))
+      .catch(() => {})
+      .finally(() => setLoadingHistory(false));
+  }, [uploadSuccess]);
 
   const currentAmount = data.store.plan_amount ?? 0;
   const sortedPlans = [...data.planOptions].sort((a, b) => a.amount - b.amount);
@@ -1253,9 +1274,16 @@ function SubscriptionSection({ data }: { data: DashboardData }) {
                   variant="contained"
                   onClick={() => void handleRenew()}
                   disabled={isRenewing || isCanceling}
-                  sx={{ bgcolor: "#1f4b3b", "&:hover": { bgcolor: "#173a2d" } }}
+                  sx={{ bgcolor: "#009ee3", "&:hover": { bgcolor: "#0082c8" } }}
                 >
-                  {isRenewing ? "Redirigiendo..." : "Renovar Suscripción"}
+                  {isRenewing ? "Redirigiendo..." : "Renovar via MercadoPago"}
+                </Button>
+                <Button
+                  variant="outlined"
+                  onClick={() => setShowTransferInfo((v) => !v)}
+                  sx={{ borderColor: "#1f4b3b", color: "#1f4b3b" }}
+                >
+                  {showTransferInfo ? "Ocultar datos de transferencia" : "Pagar por transferencia bancaria"}
                 </Button>
                 <Button
                   variant="outlined"
@@ -1266,7 +1294,37 @@ function SubscriptionSection({ data }: { data: DashboardData }) {
                   {isCanceling ? "Cancelando..." : "Cancelar Suscripción"}
                 </Button>
               </Stack>
-              
+
+              {showTransferInfo && (
+                <Paper variant="outlined" sx={{ mt: 2, p: 2, borderRadius: 2, borderColor: "#b6d4c2", bgcolor: "#f6fbf7" }}>
+                  <Typography variant="subtitle2" sx={{ color: "#173a2d", fontWeight: 800, mb: 1.5 }}>
+                    Datos bancarios para transferencia
+                  </Typography>
+                  <Stack spacing={0.8}>
+                    {[
+                      { label: "Banco", value: "Banco Nación Argentina" },
+                      { label: "Titular", value: "Guander S.R.L." },
+                      { label: "CUIT", value: "30-71234567-8" },
+                      { label: "CBU", value: "0110599520000012345678" },
+                      { label: "Alias", value: "GUANDER.PAGOS" },
+                      { label: "Concepto", value: `Suscripción ${data.store.plan_name ?? ""} — ${data.store.name}` },
+                    ].map(({ label, value }) => (
+                      <Stack key={label} direction="row" spacing={1} alignItems="center">
+                        <Typography variant="caption" sx={{ color: "#5f7a6d", minWidth: 90, fontWeight: 700 }}>
+                          {label}:
+                        </Typography>
+                        <Typography variant="body2" sx={{ color: "#173a2d", fontWeight: 500, fontFamily: "monospace" }}>
+                          {value}
+                        </Typography>
+                      </Stack>
+                    ))}
+                  </Stack>
+                  <Typography variant="caption" sx={{ color: "#7a5c00", display: "block", mt: 1.5, bgcolor: "#fffbe6", p: 1, borderRadius: 1, border: "1px solid #f5c842" }}>
+                    Una vez realizada la transferencia, subí el comprobante en el formulario de abajo para que el administrador lo apruebe.
+                  </Typography>
+                </Paper>
+              )}
+
               <Box sx={{ mt: 3, p: 2, border: '1px dashed #b6d4c2', borderRadius: 2, bgcolor: '#f8fcf9' }}>
                 <Typography variant="subtitle2" sx={{ color: "#173a2d", mb: 2, fontWeight: 'bold' }}>
                   Subir Comprobante de Pago Manual (PDF, JPG, PNG)
@@ -1354,6 +1412,69 @@ function SubscriptionSection({ data }: { data: DashboardData }) {
           {upgradeError && (
              <Typography color="error" variant="body2" sx={{ mt: 1 }}>{upgradeError}</Typography>
           )}
+
+          {/* Payment history */}
+          <Box sx={{ mt: 3 }}>
+            <Typography variant="subtitle2" sx={{ color: "#173a2d", fontWeight: 800, mb: 1.5 }}>
+              Historial de Pagos
+            </Typography>
+            {loadingHistory ? (
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <CircularProgress size={16} />
+                <Typography variant="body2" color="text.secondary">Cargando historial...</Typography>
+              </Box>
+            ) : paymentHistory.length === 0 ? (
+              <Typography variant="body2" color="text.secondary">No hay registros de pago aún.</Typography>
+            ) : (
+              <Paper variant="outlined" sx={{ borderRadius: 2, borderColor: "#d6e4da", overflow: "hidden" }}>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow sx={{ bgcolor: "#f3f9f5" }}>
+                      <TableCell sx={{ fontWeight: 700, color: "#173a2d" }}>Fecha</TableCell>
+                      <TableCell sx={{ fontWeight: 700, color: "#173a2d" }}>Plan</TableCell>
+                      <TableCell sx={{ fontWeight: 700, color: "#173a2d" }}>Monto</TableCell>
+                      <TableCell sx={{ fontWeight: 700, color: "#173a2d" }}>Estado</TableCell>
+                      <TableCell sx={{ fontWeight: 700, color: "#173a2d" }}>Comprobante</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {paymentHistory.map((p) => (
+                      <TableRow key={p.id_sub_payout} hover>
+                        <TableCell>{p.date}</TableCell>
+                        <TableCell>{p.description ?? "—"}</TableCell>
+                        <TableCell>{money(p.amount)}</TableCell>
+                        <TableCell>
+                          <Chip
+                            size="small"
+                            label={p.status === "approved" ? "Aprobado" : p.status === "rejected" ? "Rechazado" : "Pendiente"}
+                            sx={{
+                              bgcolor:
+                                p.status === "approved" ? "#d4edda" :
+                                p.status === "rejected" ? "#f8d7da" : "#fff3cd",
+                              color:
+                                p.status === "approved" ? "#155724" :
+                                p.status === "rejected" ? "#721c24" : "#856404",
+                              fontWeight: 700,
+                              fontSize: 11,
+                            }}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          {p.proof_url ? (
+                            <a href={p.proof_url} target="_blank" rel="noopener noreferrer" style={{ color: "#1f4b3b", fontSize: 12 }}>
+                              Ver
+                            </a>
+                          ) : (
+                            <Typography variant="caption" color="text.secondary">—</Typography>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </Paper>
+            )}
+          </Box>
         </CardContent>
       </Card>
 
