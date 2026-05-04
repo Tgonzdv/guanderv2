@@ -613,6 +613,8 @@ export default function SuscripcionesClient({
   const [selected, setSelected] = useState<SubscriptionInstance | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState<"suscripciones" | "pagos">("suscripciones");
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 10;
 
   const refresh = async () => {
     setRefreshing(true);
@@ -716,12 +718,12 @@ export default function SuscripcionesClient({
           placeholder="Buscar por nombre, propietario o email…"
           className="flex-1 min-w-48 border rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--guander-forest)]"
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => { setSearch(e.target.value); setPage(1); }}
         />
         <select
           className="border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--guander-forest)]"
           value={filterState}
-          onChange={(e) => setFilterState(e.target.value)}
+          onChange={(e) => { setFilterState(e.target.value); setPage(1); }}
         >
           <option value="todos">Todos los estados</option>
           <option value="activo">Activo</option>
@@ -731,7 +733,7 @@ export default function SuscripcionesClient({
         <select
           className="border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--guander-forest)]"
           value={filterType}
-          onChange={(e) => setFilterType(e.target.value)}
+          onChange={(e) => { setFilterType(e.target.value); setPage(1); }}
         >
           <option value="todos">Locales y Profesionales</option>
           <option value="store">Solo Locales</option>
@@ -778,7 +780,7 @@ export default function SuscripcionesClient({
                   </td>
                 </tr>
               ) : (
-                filtered.map((inst) => (
+                filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE).map((inst) => (
                   <tr
                     key={inst.id_store_sub}
                     className="border-b last:border-0 hover:bg-[var(--guander-cream,#f8f6f1)] transition-colors cursor-pointer"
@@ -818,6 +820,44 @@ export default function SuscripcionesClient({
           </table>
         </div>
       </div>
+
+      {/* Pagination */}
+      {filtered.length > PAGE_SIZE && (
+        <div className="flex items-center justify-between mt-4 px-1">
+          <span className="text-sm text-gray-500">
+            Mostrando {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, filtered.length)} de {filtered.length}
+          </span>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page === 1}
+              className="px-3 py-1.5 rounded-lg border text-sm font-medium hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              ← Anterior
+            </button>
+            {Array.from({ length: Math.ceil(filtered.length / PAGE_SIZE) }, (_, i) => i + 1).map((p) => (
+              <button
+                key={p}
+                onClick={() => setPage(p)}
+                className={`w-8 h-8 rounded-lg text-sm font-semibold transition-colors ${
+                  p === page
+                    ? "bg-[var(--guander-forest)] text-white"
+                    : "border hover:bg-gray-50 text-gray-600"
+                }`}
+              >
+                {p}
+              </button>
+            ))}
+            <button
+              onClick={() => setPage((p) => Math.min(Math.ceil(filtered.length / PAGE_SIZE), p + 1))}
+              disabled={page === Math.ceil(filtered.length / PAGE_SIZE)}
+              className="px-3 py-1.5 rounded-lg border text-sm font-medium hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              Siguiente →
+            </button>
+          </div>
+        </div>
+      )}
       </>)}
 
       {activeTab === "pagos" && <PagosYAprobaciones />}
