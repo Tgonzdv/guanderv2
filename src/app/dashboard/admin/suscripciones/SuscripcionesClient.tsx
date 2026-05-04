@@ -115,7 +115,8 @@ function Modal({ open, onClose, title, children }: {
 }
 
 // ── Detail Drawer ──────────────────────────────────────────────────────────
-function DetailDrawer({
+// Removed
+function _DetailDrawer_unused({
   instance,
   plans,
   onClose,
@@ -610,7 +611,6 @@ export default function SuscripcionesClient({
   const [filterType, setFilterType] = useState("todos");
   const [sortBy, setSortBy] = useState<"expiration" | "name" | "plan">("expiration");
   const [sortAsc, setSortAsc] = useState(true);
-  const [selected, setSelected] = useState<SubscriptionInstance | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState<"suscripciones" | "pagos">("suscripciones");
   const [page, setPage] = useState(1);
@@ -783,8 +783,7 @@ export default function SuscripcionesClient({
                 filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE).map((inst) => (
                   <tr
                     key={inst.id_store_sub}
-                    className="border-b last:border-0 hover:bg-[var(--guander-cream,#f8f6f1)] transition-colors cursor-pointer"
-                    onClick={() => setSelected(inst)}
+                    className="border-b last:border-0 hover:bg-[var(--guander-cream,#f8f6f1)] transition-colors"
                   >
                     <td className="px-4 py-3">
                       <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${inst.entity_type === "store" ? "bg-blue-100 text-blue-700" : "bg-purple-100 text-purple-700"}`}>
@@ -862,18 +861,6 @@ export default function SuscripcionesClient({
 
       {activeTab === "pagos" && <PagosYAprobaciones />}
 
-      {/* Detail drawer */}
-      {selected && (
-        <DetailDrawer
-          instance={selected}
-          plans={plans}
-          onClose={() => setSelected(null)}
-          onUpdated={() => {
-            setSelected(null);
-            refresh();
-          }}
-        />
-      )}
     </div>
   );
 }
