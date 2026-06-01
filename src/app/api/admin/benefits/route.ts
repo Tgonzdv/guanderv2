@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { queryD1 } from "@/lib/cloudflare-d1";
 import { ensureBenefitStoreTable } from "@/lib/benefit-store";
+import { getAdminSession } from "@/lib/admin-auth";
 
 type BenefitInput = {
   idBenefitProf?: number;
@@ -30,6 +31,8 @@ function toPositiveInt(value: unknown): number | null {
 }
 
 export async function GET() {
+  const session = await getAdminSession();
+  if (!session) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   try {
     await ensureBenefitStoreTable();
     const [benefitProf, benefitStore, professionals, stores] =
@@ -118,6 +121,8 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+  const session = await getAdminSession();
+  if (!session) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   try {
     await ensureBenefitStoreTable();
     let body: BenefitInput;
@@ -184,6 +189,8 @@ export async function POST(request: NextRequest) {
 }
 
 export async function PUT(request: NextRequest) {
+  const session = await getAdminSession();
+  if (!session) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   try {
     await ensureBenefitStoreTable();
     let body: BenefitInput;
@@ -274,6 +281,8 @@ export async function PUT(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
+  const session = await getAdminSession();
+  if (!session) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   try {
     const { searchParams } = new URL(request.url);
     const id = toPositiveInt(searchParams.get("id"));

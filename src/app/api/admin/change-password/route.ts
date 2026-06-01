@@ -1,7 +1,10 @@
 import { queryD1 } from "@/lib/cloudflare-d1";
 import bcryptjs from "bcryptjs";
+import { getAdminSession } from "@/lib/admin-auth";
 
 export async function POST(request: Request) {
+  const session = await getAdminSession();
+  if (!session) return Response.json({ message: "No autorizado" }, { status: 401 });
   try {
     const { currentPassword, newPassword, userId } = await request.json();
 
@@ -20,9 +23,9 @@ export async function POST(request: Request) {
       );
     }
 
-    if (newPassword.length < 6) {
+    if (newPassword.length < 8) {
       return Response.json(
-        { message: "La contraseña debe tener al menos 6 caracteres" },
+        { message: "La contraseña debe tener al menos 8 caracteres" },
         { status: 400 },
       );
     }

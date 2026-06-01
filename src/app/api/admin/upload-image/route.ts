@@ -1,11 +1,14 @@
 import { createHash } from 'crypto';
 import { NextRequest, NextResponse } from 'next/server';
+import { getAdminSession } from '@/lib/admin-auth';
 
 const CLOUD_NAME = process.env.CLOUDINARY_CLOUD_NAME;
 const API_KEY = process.env.CLOUDINARY_API_KEY;
 const API_SECRET = process.env.CLOUDINARY_API_SECRET;
 
 export async function POST(req: NextRequest) {
+  const session = await getAdminSession();
+  if (!session) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
   if (!CLOUD_NAME || !API_KEY || !API_SECRET) {
     return NextResponse.json({ error: 'Cloudinary credentials not configured' }, { status: 500 });
   }

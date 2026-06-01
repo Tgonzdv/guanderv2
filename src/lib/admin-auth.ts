@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import { verifyToken } from "@/lib/auth";
+import jwt from "jsonwebtoken";
 
 interface AdminSession {
   id: number;
@@ -29,11 +30,13 @@ export async function getAdminSession(): Promise<AdminSession | null> {
     }
   }
 
-  // Fallback: legacy admin_session cookie
+  // Fallback: legacy admin_session cookie (JWT-signed)
   const session = cookieStore.get("admin_session");
   if (!session) return null;
   try {
-    return JSON.parse(atob(session.value)) as AdminSession;
+    const secret = process.env.JWT_SECRET;
+    if (!secret) return null;
+    return jwt.verify(session.value, secret) as AdminSession;
   } catch {
     return null;
   }
@@ -57,16 +60,7 @@ export async function verifyAdmin(
     );
     if (results.length > 0) return results[0];
   } catch {
-    // Table might not exist yet — fall through to default credentials
-  }
-
-  if (email === "admin@guander.com" && password === "admin123") {
-    return {
-      id: 1,
-      name: "Administrador",
-      email: "admin@guander.com",
-      role: "Administrador del Sistema",
-    };
+    // Table might not exist yet
   }
 
   return null;

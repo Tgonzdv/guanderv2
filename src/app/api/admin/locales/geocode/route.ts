@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { getAdminSession } from '@/lib/admin-auth';
 
 interface NominatimEntry {
   display_name?: string;
@@ -7,6 +8,8 @@ interface NominatimEntry {
 }
 
 export async function GET(request: Request) {
+  const session = await getAdminSession();
+  if (!session) return NextResponse.json({ suggestions: [] }, { status: 401 });
   const { searchParams } = new URL(request.url);
   const q = searchParams.get('q')?.trim() ?? '';
 

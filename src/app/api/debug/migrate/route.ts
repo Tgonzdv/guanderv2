@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { queryD1 } from "@/lib/cloudflare-d1";
 
 export async function GET() {
+  if (process.env.NODE_ENV === "production") {
+    return NextResponse.json({ error: "No disponible" }, { status: 403 });
+  }
   try {
     await queryD1(
       `CREATE TABLE IF NOT EXISTS benefit_store (

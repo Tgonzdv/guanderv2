@@ -32,6 +32,26 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (typeof email !== "string" || email.trim().length > 255 || !emailRegex.test(email.trim())) {
+      return NextResponse.json({ error: "Email inválido" }, { status: 400 });
+    }
+    if (typeof password !== "string" || password.length < 8 || password.length > 128) {
+      return NextResponse.json({ error: "La contraseña debe tener entre 8 y 128 caracteres" }, { status: 400 });
+    }
+    if (name && (typeof name !== "string" || name.trim().length > 100)) {
+      return NextResponse.json({ error: "Nombre demasiado largo" }, { status: 400 });
+    }
+    if (lastName && (typeof lastName !== "string" || lastName.trim().length > 100)) {
+      return NextResponse.json({ error: "Apellido demasiado largo" }, { status: 400 });
+    }
+    if (tel && (typeof tel !== "string" || tel.trim().length > 30 || !/^[0-9\-\+\s\(\)]+$/.test(tel.trim()))) {
+      return NextResponse.json({ error: "Teléfono inválido" }, { status: 400 });
+    }
+    if (address && (typeof address !== "string" || address.trim().length > 255)) {
+      return NextResponse.json({ error: "Dirección demasiado larga" }, { status: 400 });
+    }
+
     if (password !== confirmPassword) {
       return NextResponse.json(
         { error: "Las contraseñas no coinciden" },

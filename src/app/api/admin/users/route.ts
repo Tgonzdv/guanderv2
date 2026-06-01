@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { queryD1 } from "@/lib/cloudflare-d1";
+import { getAdminSession } from "@/lib/admin-auth";
 
 const USER_SELECT = `
   SELECT
@@ -18,6 +19,8 @@ const USER_SELECT = `
 `;
 
 export async function GET() {
+  const session = await getAdminSession();
+  if (!session) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   try {
     const users = await queryD1<Record<string, unknown>>(
       `${USER_SELECT} ORDER BY u.id_user DESC LIMIT 50`,
@@ -44,6 +47,8 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const session = await getAdminSession();
+  if (!session) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   let body: {
     name?: string;
     lastName?: string;
@@ -111,6 +116,8 @@ export async function POST(request: Request) {
 }
 
 export async function DELETE(request: Request) {
+  const session = await getAdminSession();
+  if (!session) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   const { searchParams } = new URL(request.url);
   const id = searchParams.get('id');
   if (!id) return NextResponse.json({ error: 'id es requerido' }, { status: 400 });
@@ -128,6 +135,8 @@ export async function DELETE(request: Request) {
 }
 
 export async function PATCH(request: Request) {
+  const session = await getAdminSession();
+  if (!session) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   let body: {
     id_user?: number;
     name?: string;

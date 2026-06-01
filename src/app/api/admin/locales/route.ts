@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { queryD1 } from '@/lib/cloudflare-d1';
+import { getAdminSession } from '@/lib/admin-auth';
 
 function parseLatLng(raw: string | null | undefined): string | null {
   if (!raw) return null;
@@ -44,6 +45,8 @@ async function ensureImageUrlColumn() {
 }
 
 export async function GET() {
+  const session = await getAdminSession();
+  if (!session) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
   try {
     const stores = await queryD1<Record<string, unknown>>(
       'SELECT id_store, name, description, address, location, stars, fk_category, image_url FROM stores ORDER BY id_store DESC',
@@ -67,6 +70,8 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const session = await getAdminSession();
+  if (!session) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
   let body: {
     name?: string;
     description?: string;
@@ -158,6 +163,8 @@ export async function POST(request: Request) {
 }
 
 export async function PUT(request: Request) {
+  const session = await getAdminSession();
+  if (!session) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
   let body: {
     id_store: number;
     name?: string;
@@ -255,6 +262,8 @@ export async function PUT(request: Request) {
 }
 
 export async function DELETE(request: Request) {
+  const session = await getAdminSession();
+  if (!session) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
   const { searchParams } = new URL(request.url);
   const id = searchParams.get('id');
   const action = searchParams.get('action'); // 'delete' | 'deactivate' | 'activate'

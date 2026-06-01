@@ -1,10 +1,13 @@
 import { NextResponse } from 'next/server';
+import { getAdminSession } from '@/lib/admin-auth';
 
 interface NominatimReverseResponse {
   display_name?: string;
 }
 
 export async function GET(request: Request) {
+  const session = await getAdminSession();
+  if (!session) return NextResponse.json({ address: '' }, { status: 401 });
   const { searchParams } = new URL(request.url);
   const lat = Number(searchParams.get('lat'));
   const lng = Number(searchParams.get('lng'));

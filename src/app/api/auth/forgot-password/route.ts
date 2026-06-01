@@ -45,7 +45,11 @@ export async function POST(request: Request) {
 
     const user = users[0];
 
-    const jwtSecret = process.env.JWT_SECRET || 'dev-insecure-jwt-secret-change-me';
+    const jwtSecret = process.env.JWT_SECRET;
+    if (!jwtSecret) {
+      console.error('JWT_SECRET not configured');
+      return NextResponse.json({ error: 'Error de configuración del servidor' }, { status: 500 });
+    }
     const resetToken = jwt.sign(
       { email: user.email, purpose: 'password-reset' },
       jwtSecret,

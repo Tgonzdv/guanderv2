@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { queryD1 } from "@/lib/cloudflare-d1";
+import { getAdminSession } from "@/lib/admin-auth";
 
 interface CategoryRow {
   id_category: number;
@@ -8,6 +9,8 @@ interface CategoryRow {
 }
 
 export async function GET() {
+  const session = await getAdminSession();
+  if (!session) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
   try {
     const categories = await queryD1<CategoryRow>(
       "SELECT id_category, name, description FROM category ORDER BY name ASC",
@@ -55,6 +58,8 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const session = await getAdminSession();
+  if (!session) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
   let body: { name?: string; description?: string };
   try {
     body = await request.json();
@@ -111,6 +116,8 @@ export async function POST(request: Request) {
 }
 
 export async function PUT(request: Request) {
+  const session = await getAdminSession();
+  if (!session) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
   let body: { id?: number; name?: string; description?: string };
   try {
     body = await request.json();
@@ -151,6 +158,8 @@ export async function PUT(request: Request) {
 }
 
 export async function DELETE(request: Request) {
+  const session = await getAdminSession();
+  if (!session) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
   const url = new URL(request.url);
   const id = url.searchParams.get("id");
 

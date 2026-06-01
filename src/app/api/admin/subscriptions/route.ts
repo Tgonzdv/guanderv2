@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { queryD1 } from '@/lib/cloudflare-d1';
 import { ensureSubscriptionBenefitsColumn } from '@/lib/subscription-benefits';
+import { getAdminSession } from '@/lib/admin-auth';
 
 interface SubscriptionPayload {
   id_subscription?: number;
@@ -17,6 +18,8 @@ function normalizeState(raw: string | undefined): string {
 }
 
 export async function GET() {
+  const session = await getAdminSession();
+  if (!session) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
   try {
     await ensureSubscriptionBenefitsColumn();
     const plans = await queryD1(
@@ -31,6 +34,8 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const session = await getAdminSession();
+  if (!session) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
   let body: SubscriptionPayload;
   try {
     body = await request.json();
@@ -72,6 +77,8 @@ export async function POST(request: Request) {
 }
 
 export async function PUT(request: Request) {
+  const session = await getAdminSession();
+  if (!session) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
   let body: SubscriptionPayload;
   try {
     body = await request.json();

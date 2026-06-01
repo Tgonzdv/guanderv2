@@ -1,5 +1,6 @@
 ﻿import { NextResponse } from 'next/server';
 import { queryD1 } from '@/lib/cloudflare-d1';
+import { getAdminSession } from '@/lib/admin-auth';
 
 export interface CouponRow {
   id_coupon: number;
@@ -15,6 +16,8 @@ export interface CouponRow {
 }
 
 export async function GET() {
+  const session = await getAdminSession();
+  if (!session) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
   try {
     const [profCoupons, storeCoupons] = await Promise.all([
       queryD1<CouponRow>(

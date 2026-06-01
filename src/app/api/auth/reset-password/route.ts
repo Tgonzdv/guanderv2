@@ -16,11 +16,14 @@ export async function POST(request: Request) {
   if (!token?.trim()) {
     return NextResponse.json({ error: 'Token requerido' }, { status: 400 });
   }
-  if (!password || password.length < 6) {
-    return NextResponse.json({ error: 'La contraseña debe tener al menos 6 caracteres' }, { status: 400 });
+  if (!password || password.length < 8) {
+    return NextResponse.json({ error: 'La contraseña debe tener al menos 8 caracteres' }, { status: 400 });
   }
 
-  const jwtSecret = process.env.JWT_SECRET || 'dev-insecure-jwt-secret-change-me';
+  const jwtSecret = process.env.JWT_SECRET;
+  if (!jwtSecret) {
+    return NextResponse.json({ error: 'Error de configuración del servidor' }, { status: 500 });
+  }
 
   let payload: { email: string; purpose: string };
   try {

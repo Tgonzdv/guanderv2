@@ -1,7 +1,10 @@
 ﻿import { NextResponse } from 'next/server';
 import { queryD1 } from '@/lib/cloudflare-d1';
+import { getAdminSession } from '@/lib/admin-auth';
 
 export async function GET() {
+  const session = await getAdminSession();
+  if (!session) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
   try {
     const serviceTypes = await queryD1<{ id_type_service: number; name: string }>(
       'SELECT id_type_service, name FROM type_service ORDER BY name ASC',
@@ -15,6 +18,8 @@ export async function GET() {
 }
 
 export async function PUT(request: Request) {
+  const session = await getAdminSession();
+  if (!session) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
   let body: {
     id_professional: number;
     description?: string;

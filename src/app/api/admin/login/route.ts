@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import jwt from "jsonwebtoken";
 import { verifyAdmin } from "@/lib/admin-auth";
 
 export async function POST(request: Request) {
@@ -30,13 +31,20 @@ export async function POST(request: Request) {
     );
   }
 
-  const sessionData = btoa(
-    JSON.stringify({
+  const jwtSecret = process.env.JWT_SECRET;
+  if (!jwtSecret) {
+    return NextResponse.json({ error: "Configuración del servidor inválida" }, { status: 500 });
+  }
+
+  const sessionToken = jwt.sign(
+    {
       id: admin.id,
       name: admin.name,
       email: admin.email,
       role: admin.role,
-    }),
+    },
+    jwtSecret,
+    { expiresIn: "24h" },
   );
 
   const response = NextResponse.json({
@@ -44,10 +52,10 @@ export async function POST(request: Request) {
     admin: { name: admin.name, role: admin.role },
   });
 
-  response.cookies.set("admin_session", sessionData, {
+  response.cookies.set("admin_session", sessionToken, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
+    sameSite: "strict",
     maxAge: 60 * 60 * 24,
     path: "/",
   });
