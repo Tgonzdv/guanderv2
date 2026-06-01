@@ -73,6 +73,9 @@ export default function DownloadsSection() {
         </Typography>
 
         <Button
+          component="a"
+          href="/guander.apk"
+          download="guander.apk"
           variant="contained"
           size="large"
           startIcon={<PhoneAndroidIcon />}
