@@ -53,6 +53,7 @@ AGENTS.md
 CLAUDE.md
 DATABASE_AUTH_SETUP.md
 .pnpm-debug.log*
+package-lock.json
 
 # env files (can opt-in for committing if needed)
 .env*
