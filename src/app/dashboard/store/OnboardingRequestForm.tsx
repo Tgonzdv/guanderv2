@@ -257,7 +257,7 @@ export default function OnboardingRequestForm() {
   useEffect(() => {
     (async () => {
       try {
-        const res = await fetch("/api/admin/locales/categories");
+        const res = await fetch("/api/store/categories");
         const data = await res.json() as { success: boolean; data: Category[] };
         if (data.success) setCategories(data.data);
       } catch {
