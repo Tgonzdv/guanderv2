@@ -43,10 +43,12 @@ export default async function ProfesionalesPage() {
         sch.weekend,
         sch.sunday
       FROM professionals p
-      LEFT JOIN users u      ON u.id_user         = p.fk_user_id
+      INNER JOIN users u      ON u.id_user         = p.fk_user_id
+      INNER JOIN roles r      ON r.id_rol          = u.fk_rol
       LEFT JOIN user_data ud ON ud.id_user_data    = u.fk_user_data
       LEFT JOIN type_service ts ON ts.id_type_service = p.fk_type_service
       LEFT JOIN schedule sch ON sch.id_schedule = p.fk_schedule
+      WHERE r.rol = 'professional' AND u.state = 1
       ORDER BY p.id_professional DESC`,
       [],
       { revalidate: false },
