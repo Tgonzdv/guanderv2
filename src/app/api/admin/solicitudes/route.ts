@@ -1,5 +1,6 @@
 ﻿import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
+import { revalidatePath } from "next/cache";
 import { verifyToken } from "@/lib/auth";
 import { queryD1 } from "@/lib/cloudflare-d1";
 
@@ -247,6 +248,9 @@ export async function PATCH(request: Request) {
       [notes ?? "", id_request],
       { revalidate: false },
     );
+
+    // Invalidate the user-facing dashboard so the new store is picked up on the next reload
+    revalidatePath("/dashboard/store");
 
     return NextResponse.json({ success: true, action: "approved" });
   } catch (e) {

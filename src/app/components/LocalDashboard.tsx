@@ -53,7 +53,8 @@ async function loadDashboardData(userId: number): Promise<DashboardData | null> 
     LEFT JOIN subscription sub ON sub.id_subscription = ss.fk_subscription_id
     WHERE s.fk_user = ?
     LIMIT 1`,
-    [userId]
+    [userId],
+    { revalidate: false }
   );
 
   const store = stores[0];
