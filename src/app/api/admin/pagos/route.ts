@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { getAdminSession } from "@/lib/admin-auth";
 import { queryD1 } from "@/lib/cloudflare-d1";
-import { ensureSubPayoutTable, ensureStoreSubPayoutColumn, ensureSubPayoutColumns } from "@/lib/sub-payouts";
+import { ensureSubPayoutTable, ensureSubPayoutColumns, ensureStoreSubPayoutColumn } from "@/lib/sub-payouts";
 
 export async function GET(request: NextRequest) {
   const session = await getAdminSession();
@@ -32,7 +33,9 @@ export async function GET(request: NextRequest) {
        LEFT JOIN type_service pr_ts ON pr_ts.id_type_service = pr.fk_type_service
        LEFT JOIN subscription sub ON ssub.fk_subscription_id = sub.id_subscription
        GROUP BY sp.id_sub_payout
-       ORDER BY sp.id_sub_payout DESC`
+       ORDER BY sp.id_sub_payout DESC`,
+      [],
+      { revalidate: false }
     );
     return NextResponse.json({ payouts });
   } catch (error: any) {
@@ -60,6 +63,8 @@ export async function POST(request: NextRequest) {
         "UPDATE store_sub SET state_payout = 'activo' WHERE id_store_sub = ?",
         [id_store_sub]
       );
+      revalidatePath("/dashboard/admin/suscripciones");
+      revalidatePath("/dashboard/store");
       return NextResponse.json({ success: true, message: "Pago aprobado" });
     } else if (action === "reject") {
       await queryD1(
@@ -71,6 +76,8 @@ export async function POST(request: NextRequest) {
         "UPDATE store_sub SET state_payout = 'inactivo' WHERE id_store_sub = ?",
         [id_store_sub]
       );
+      revalidatePath("/dashboard/admin/suscripciones");
+      revalidatePath("/dashboard/store");
       return NextResponse.json({ success: true, message: "Pago rechazado" });
     }
 

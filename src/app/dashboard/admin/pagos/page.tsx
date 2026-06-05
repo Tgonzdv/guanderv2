@@ -35,6 +35,7 @@ export default function AdminPagosPage() {
   const [payouts, setPayouts] = useState<Payout[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [pendingId, setPendingId] = useState<number | null>(null);
 
   useEffect(() => {
     fetchPayouts();
@@ -44,7 +45,7 @@ export default function AdminPagosPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/admin/pagos");
+      const res = await fetch("/api/admin/pagos", { cache: "no-store" });
       if (!res.ok) throw new Error("Error fetching payouts");
       const data = await res.json();
       setPayouts(data.payouts || []);
@@ -56,16 +57,24 @@ export default function AdminPagosPage() {
   }
 
   async function handleStatus(id_sub_payout: number, fk_store_sub: number, action: "approve" | "reject") {
+    if (pendingId !== null) return;
+    setPendingId(id_sub_payout);
     try {
       const res = await fetch("/api/admin/pagos", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action, id_sub_payout, id_store_sub: fk_store_sub }),
+        cache: "no-store",
       });
-      if (!res.ok) throw new Error("Action failed");
-      fetchPayouts();
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data?.error ?? "Action failed");
+      }
+      await fetchPayouts();
     } catch (err: any) {
       alert(err.message);
+    } finally {
+      setPendingId(null);
     }
   }
 
@@ -139,6 +148,7 @@ export default function AdminPagosPage() {
                         color="success"
                         size="small"
                         onClick={() => handleStatus(p.id_sub_payout, p.fk_store_sub, "approve")}
+                        disabled={pendingId !== null}
                       >
                         Aprobar
                       </Button>
@@ -147,6 +157,7 @@ export default function AdminPagosPage() {
                         color="error"
                         size="small"
                         onClick={() => handleStatus(p.id_sub_payout, p.fk_store_sub, "reject")}
+                        disabled={pendingId !== null}
                       >
                         Rechazar
                       </Button>

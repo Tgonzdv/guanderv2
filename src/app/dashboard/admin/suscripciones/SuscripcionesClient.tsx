@@ -424,12 +424,13 @@ function PagosYAprobaciones() {
   const [payouts, setPayouts] = useState<AdminPayout[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [pendingId, setPendingId] = useState<number | null>(null);
 
   const fetchPayouts = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/admin/pagos");
+      const res = await fetch("/api/admin/pagos", { cache: "no-store" });
       const data = await res.json() as { payouts?: AdminPayout[]; error?: string };
       if (!res.ok) throw new Error(data.error ?? "Error al cargar los comprobantes");
       setPayouts(data.payouts || []);
@@ -443,16 +444,24 @@ function PagosYAprobaciones() {
   useEffect(() => { fetchPayouts(); }, [fetchPayouts]);
 
   const handleStatus = async (id_sub_payout: number, fk_store_sub: number, action: "approve" | "reject") => {
+    if (pendingId !== null) return;
+    setPendingId(id_sub_payout);
     try {
       const res = await fetch("/api/admin/pagos", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action, id_sub_payout, id_store_sub: fk_store_sub }),
+        cache: "no-store",
       });
-      if (!res.ok) throw new Error("No se pudo procesar la acción");
-      fetchPayouts();
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({})) as { error?: string };
+        throw new Error(data.error ?? "No se pudo procesar la acción");
+      }
+      await fetchPayouts();
     } catch (err: unknown) {
       alert(err instanceof Error ? err.message : "Error");
+    } finally {
+      setPendingId(null);
     }
   };
 
@@ -569,13 +578,15 @@ function PagosYAprobaciones() {
                           <div className="flex items-center gap-2">
                             <button
                               onClick={() => handleStatus(p.id_sub_payout, p.fk_store_sub, "approve")}
-                              className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-green-600 text-white text-xs font-semibold hover:bg-green-700 transition-colors"
+                              disabled={pendingId !== null}
+                              className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-green-600 text-white text-xs font-semibold hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                               <CheckCircle size={12} /> Aprobar
                             </button>
                             <button
                               onClick={() => handleStatus(p.id_sub_payout, p.fk_store_sub, "reject")}
-                              className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-red-500 text-red-600 text-xs font-semibold hover:bg-red-50 transition-colors"
+                              disabled={pendingId !== null}
+                              className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-red-500 text-red-600 text-xs font-semibold hover:bg-red-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                               <XCircle size={12} /> Rechazar
                             </button>
