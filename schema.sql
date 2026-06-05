@@ -211,16 +211,18 @@ CREATE TABLE store_purchase (
   FOREIGN KEY (fk_store)    REFERENCES stores(id_store)      ON UPDATE CASCADE
 );
 CREATE TABLE sub_payout (
-  id_sub_payout  INTEGER PRIMARY KEY AUTOINCREMENT,
-  date           TEXT NOT NULL,
-  amount         REAL NOT NULL,
-  description    TEXT DEFAULT NULL,
-  proof_url      TEXT DEFAULT NULL,
-  status         TEXT DEFAULT 'pending',
-  fk_store_sub   INTEGER NOT NULL,
-  fk_user        INTEGER NOT NULL,
-  FOREIGN KEY (fk_store_sub) REFERENCES store_sub(id_store_sub) ON UPDATE CASCADE,
-  FOREIGN KEY (fk_user)      REFERENCES users(id_user)           ON UPDATE CASCADE
+  id_sub_payout      INTEGER PRIMARY KEY AUTOINCREMENT,
+  date               TEXT NOT NULL,
+  amount             REAL NOT NULL,
+  description        TEXT DEFAULT NULL,
+  proof_url          TEXT DEFAULT NULL,
+  status             TEXT DEFAULT 'pending',
+  fk_store_sub       INTEGER NOT NULL,
+  fk_user            INTEGER NOT NULL,
+  fk_subscription_id INTEGER DEFAULT NULL,
+  FOREIGN KEY (fk_store_sub)       REFERENCES store_sub(id_store_sub) ON UPDATE CASCADE,
+  FOREIGN KEY (fk_user)            REFERENCES users(id_user)           ON UPDATE CASCADE,
+  FOREIGN KEY (fk_subscription_id) REFERENCES subscription(id_subscription) ON UPDATE CASCADE
 );
 CREATE TABLE social_media (
   id_social_media       INTEGER PRIMARY KEY AUTOINCREMENT,

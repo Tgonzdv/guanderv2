@@ -40,6 +40,15 @@ export async function ensureSubPayoutColumns(): Promise<void> {
   } catch {
     // Column already exists.
   }
+  try {
+    await queryD1(
+      "ALTER TABLE sub_payout ADD COLUMN fk_subscription_id INTEGER DEFAULT NULL",
+      [],
+      { revalidate: false },
+    );
+  } catch {
+    // Column already exists.
+  }
 }
 
 export async function ensureStoreSubPayoutColumn(): Promise<void> {

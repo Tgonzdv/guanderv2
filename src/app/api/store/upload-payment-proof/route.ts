@@ -15,7 +15,8 @@ export async function POST(request: Request) {
     let paymentAmount = 0;
     let paymentDate = new Date().toISOString().slice(0, 10);
     let paymentDescription = "Suscripción - Carga Manual";
-    
+    let requestedSubscriptionId: number | null = null;
+
     // Accept JSON body with Cloudinary URL (preferred) or legacy base64 FormData
     const contentType = request.headers.get("content-type") || "";
     if (contentType.includes("application/json")) {
@@ -24,7 +25,7 @@ export async function POST(request: Request) {
         paymentProof?: string;
         amount?: number;
         date?: string;
-        planId?: string | null;
+        planId?: string | number | null;
         planName?: string | null;
       };
       base64File = body.proofUrl ?? body.paymentProof ?? "";
@@ -32,6 +33,10 @@ export async function POST(request: Request) {
       if (body.date) paymentDate = body.date;
       if (body.planName) paymentDescription = body.planName;
       else if (body.planId) paymentDescription = `Plan ID:${body.planId}`;
+      if (body.planId != null && body.planId !== "") {
+        const n = Number(body.planId);
+        if (Number.isInteger(n) && n > 0) requestedSubscriptionId = n;
+      }
     } else if (contentType.includes("multipart/form-data")) {
       const formData = await request.formData();
       const file = formData.get("file") as File;
@@ -46,6 +51,10 @@ export async function POST(request: Request) {
       if (dateStr) paymentDate = dateStr;
       const planId = formData.get("planId") as string | null;
       if (planId) paymentDescription = `Plan ID:${planId}`;
+      if (planId) {
+        const n = Number(planId);
+        if (Number.isInteger(n) && n > 0) requestedSubscriptionId = n;
+      }
     }
 
     if (!base64File) {
@@ -67,9 +76,9 @@ export async function POST(request: Request) {
 
     // Insert into sub_payout to queue approval process for admin
     await queryD1(
-      `INSERT INTO sub_payout (date, amount, description, proof_url, status, fk_store_sub, fk_user)
-       VALUES (?, ?, ?, ?, 'pending', ?, ?)`,
-      [paymentDate, paymentAmount, paymentDescription, base64File, storeSubId, userId]
+      `INSERT INTO sub_payout (date, amount, description, proof_url, status, fk_store_sub, fk_user, fk_subscription_id)
+       VALUES (?, ?, ?, ?, 'pending', ?, ?, ?)`,
+      [paymentDate, paymentAmount, paymentDescription, base64File, storeSubId, userId, requestedSubscriptionId]
     );
 
     // Save proof URL — state_payout stays as-is until admin approves

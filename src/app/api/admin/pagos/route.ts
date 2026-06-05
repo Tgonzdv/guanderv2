@@ -22,9 +22,13 @@ export async function GET(request: NextRequest) {
          sp.status,
          sp.fk_store_sub,
          sp.fk_user,
+         sp.fk_subscription_id as requested_subscription_id,
          u.username,
          COALESCE(st.name, pr_ts.name, 'Sin nombre') as store_name,
-         sub.name as subscription_name
+         sub.name as subscription_name,
+         cur_sub.name as current_plan_name,
+         req_sub.name as requested_plan_name,
+         req_sub.amount as requested_plan_amount
        FROM sub_payout sp
        LEFT JOIN users u ON sp.fk_user = u.id_user
        LEFT JOIN store_sub ssub ON sp.fk_store_sub = ssub.id_store_sub
@@ -32,6 +36,8 @@ export async function GET(request: NextRequest) {
        LEFT JOIN professionals pr ON pr.fk_store_sub_id = ssub.id_store_sub
        LEFT JOIN type_service pr_ts ON pr_ts.id_type_service = pr.fk_type_service
        LEFT JOIN subscription sub ON ssub.fk_subscription_id = sub.id_subscription
+       LEFT JOIN subscription cur_sub ON cur_sub.id_subscription = ssub.fk_subscription_id
+       LEFT JOIN subscription req_sub ON req_sub.id_subscription = sp.fk_subscription_id
        GROUP BY sp.id_sub_payout
        ORDER BY sp.id_sub_payout DESC`,
       [],
@@ -54,15 +60,31 @@ export async function POST(request: NextRequest) {
     const { action, id_sub_payout, id_store_sub } = await request.json();
 
     if (action === "approve") {
+      // Look up the plan the user actually requested when uploading the receipt
+      const rows = await queryD1<{ fk_subscription_id: number | null }>(
+        "SELECT fk_subscription_id FROM sub_payout WHERE id_sub_payout = ? LIMIT 1",
+        [id_sub_payout],
+        { revalidate: false },
+      );
+      const requestedSubId = rows[0]?.fk_subscription_id ?? null;
+
       await queryD1(
         "UPDATE sub_payout SET status = 'approved' WHERE id_sub_payout = ?",
         [id_sub_payout]
       );
-      // Unlock the store/professional by setting state_payout to 'activo'
-      await queryD1(
-        "UPDATE store_sub SET state_payout = 'activo' WHERE id_store_sub = ?",
-        [id_store_sub]
-      );
+
+      // Apply the requested plan if any, then unlock the subscription
+      if (requestedSubId && Number.isInteger(requestedSubId) && requestedSubId > 0) {
+        await queryD1(
+          "UPDATE store_sub SET state_payout = 'activo', fk_subscription_id = ?, upgrade_date = ? WHERE id_store_sub = ?",
+          [requestedSubId, new Date().toISOString().slice(0, 10), id_store_sub]
+        );
+      } else {
+        await queryD1(
+          "UPDATE store_sub SET state_payout = 'activo' WHERE id_store_sub = ?",
+          [id_store_sub]
+        );
+      }
       revalidatePath("/dashboard/admin/suscripciones");
       revalidatePath("/dashboard/store");
       return NextResponse.json({ success: true, message: "Pago aprobado" });

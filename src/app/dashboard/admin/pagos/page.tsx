@@ -26,9 +26,13 @@ type Payout = {
   status: string;
   fk_store_sub: number;
   fk_user: number;
+  requested_subscription_id: number | null;
   username: string;
   store_name: string;
   subscription_name: string;
+  current_plan_name: string | null;
+  requested_plan_name: string | null;
+  requested_plan_amount: number | null;
 };
 
 export default function AdminPagosPage() {
@@ -117,7 +121,20 @@ export default function AdminPagosPage() {
                 <TableCell>{p.id_sub_payout}</TableCell>
                 <TableCell>{new Date(p.date).toLocaleString()}</TableCell>
                 <TableCell>{p.store_name} ({p.username})</TableCell>
-                <TableCell>{p.subscription_name}</TableCell>
+                <TableCell>
+                  {p.requested_plan_name ? (
+                    <Box>
+                      <Box sx={{ fontWeight: 600, color: "#173a2d" }}>{p.requested_plan_name}</Box>
+                      {p.current_plan_name && p.current_plan_name !== p.requested_plan_name && (
+                        <Box sx={{ fontSize: 12, color: "text.secondary" }}>
+                          Actual: {p.current_plan_name}
+                        </Box>
+                      )}
+                    </Box>
+                  ) : (
+                    p.subscription_name
+                  )}
+                </TableCell>
                 <TableCell>
                   <Chip
                     label={p.status}

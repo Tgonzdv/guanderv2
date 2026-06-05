@@ -409,9 +409,13 @@ interface AdminPayout {
   status: string;
   fk_store_sub: number;
   fk_user: number;
+  requested_subscription_id: number | null;
   username: string;
   store_name: string;
   subscription_name: string;
+  current_plan_name: string | null;
+  requested_plan_name: string | null;
+  requested_plan_amount: number | null;
 }
 
 const PAGO_STATUS_LABELS: Record<string, { label: string; color: string }> = {
@@ -534,8 +538,17 @@ function PagosYAprobaciones() {
                         <div className="text-xs text-gray-400">{p.username}</div>
                       </td>
                       <td className="px-4 py-3 text-gray-600">
-                        <div>{p.subscription_name}</div>
-                        {p.description && p.description !== "Suscripción - Carga Manual" && (
+                        {p.requested_plan_name ? (
+                          <>
+                            <div className="font-semibold text-[var(--guander-ink)]">{p.requested_plan_name}</div>
+                            {p.current_plan_name && p.current_plan_name !== p.requested_plan_name && (
+                              <div className="text-xs text-gray-400">Plan actual: {p.current_plan_name}</div>
+                            )}
+                          </>
+                        ) : (
+                          <div>{p.subscription_name}</div>
+                        )}
+                        {p.description && p.description !== "Suscripción - Carga Manual" && !p.requested_plan_name && (
                           <div className="text-xs text-gray-400">{p.description}</div>
                         )}
                       </td>
