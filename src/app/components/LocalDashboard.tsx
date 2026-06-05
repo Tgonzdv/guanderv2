@@ -254,9 +254,10 @@ async function loadDashboardData(userId: number): Promise<DashboardData | null> 
     queryD1<SubscriptionPlanOption>(
       `SELECT id_subscription, name, description, state, amount, plan_benefits
        FROM subscription
-       WHERE LOWER(state) = 'activo'
+       WHERE LOWER(state) IN ('activo', 'active')
        ORDER BY amount ASC`,
-      []
+      [],
+      { revalidate: false }
     ),
   ]);
 
