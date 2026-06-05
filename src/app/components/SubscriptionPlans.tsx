@@ -43,7 +43,9 @@ export default async function SubscriptionPlans() {
 
   try {
     subscriptions = await queryD1<Subscription>(
-      "SELECT id_subscription, name, description, plan_benefits, state, amount FROM subscription WHERE state = 'activo' ORDER BY amount ASC"
+      "SELECT id_subscription, name, description, plan_benefits, state, amount FROM subscription WHERE LOWER(state) IN ('activo', 'active') ORDER BY amount ASC",
+      [],
+      { revalidate: false }
     );
   } catch (error) {
     console.error('Error fetching subscriptions:', error);
