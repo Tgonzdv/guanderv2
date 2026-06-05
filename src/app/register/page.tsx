@@ -56,9 +56,13 @@ export default function Register() {
     setError("");
     setPlansLoading(true);
     try {
-      const res = await fetch("/api/admin/subscriptions");
+      const res = await fetch("/api/store/subscriptions");
       const data = await res.json();
-      setPlans((data.data ?? []).filter((p: Plan) => p.amount >= 0));
+      if (res.ok) {
+        setPlans((data.data ?? []).filter((p: Plan) => p.amount >= 0));
+      } else {
+        setPlans([]);
+      }
     } catch {
       setPlans([]);
     } finally {
