@@ -6,7 +6,7 @@ export async function GET() {
   try {
     await ensureSubscriptionBenefitsColumn();
     const plans = await queryD1(
-      "SELECT id_subscription, name, description, plan_benefits, state, amount FROM subscription WHERE state = 'activo' ORDER BY amount ASC",
+      "SELECT id_subscription, name, description, plan_benefits, state, amount FROM subscription WHERE LOWER(state) IN ('activo', 'active') ORDER BY amount ASC",
       [],
       { revalidate: false },
     );
