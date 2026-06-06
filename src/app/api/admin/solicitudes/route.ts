@@ -222,25 +222,66 @@ export async function PATCH(request: Request) {
       } catch { /* use 1 */ }
     }
 
-    // 3. Create store
-    const locationToSave = parseLatLng(req.location) ?? "0,0";
-
-    await queryD1(
-      `INSERT INTO stores (name, description, address, location, stars, fk_user, fk_category, fk_schedule, fk_store_sub_id, image_url)
-       VALUES (?, ?, ?, ?, 0, ?, ?, ?, ?, ?)`,
-      [
-        req.business_name,
-        req.description ?? "",
-        req.address,
-        locationToSave,
-        req.fk_user,
-        req.fk_category ?? 1,
-        fk_schedule,
-        fk_store_sub_id,
-        req.image_url ?? null,
-      ],
+    // 3. Resolver el rol del usuario y crear la fila correspondiente:
+    //    store_owner  -> INSERT INTO stores
+    //    professional -> INSERT INTO professionals
+    const userRoleRows = await queryD1<{ rol: string }>(
+      `SELECT r.rol
+       FROM users u
+       INNER JOIN roles r ON r.id_rol = u.fk_rol
+       WHERE u.id_user = ? LIMIT 1`,
+      [req.fk_user],
       { revalidate: false },
     );
+    const userRole = userRoleRows[0]?.rol ?? "store_owner";
+
+    const locationToSave = parseLatLng(req.location) ?? "0,0";
+
+    if (userRole === "professional") {
+      // El nombre visible del profesional sale del JOIN con user_data
+      // (ud.name + ud.last_name), por eso professionals no guarda name.
+      // fk_type_service es NOT NULL: tomamos el id mas bajo disponible
+      // (la solicitud de alta no pide tipo de servicio).
+      const typeRows = await queryD1<{ id_type_service: number }>(
+        "SELECT id_type_service FROM type_service ORDER BY id_type_service ASC LIMIT 1",
+        [],
+        { revalidate: false },
+      );
+      const fkTypeService = typeRows[0]?.id_type_service ?? 1;
+
+      await queryD1(
+        `INSERT INTO professionals (description, address, accept_point, location, stars, image_url, fk_schedule, fk_type_service, fk_user_id, fk_store_sub_id)
+         VALUES (?, ?, 0, ?, 0, ?, ?, ?, ?, ?)`,
+        [
+          req.description ?? req.business_name ?? "",
+          req.address,
+          locationToSave,
+          req.image_url ?? null,
+          fk_schedule,
+          fkTypeService,
+          req.fk_user,
+          fk_store_sub_id,
+        ],
+        { revalidate: false },
+      );
+    } else {
+      await queryD1(
+        `INSERT INTO stores (name, description, address, location, stars, fk_user, fk_category, fk_schedule, fk_store_sub_id, image_url)
+         VALUES (?, ?, ?, ?, 0, ?, ?, ?, ?, ?)`,
+        [
+          req.business_name,
+          req.description ?? "",
+          req.address,
+          locationToSave,
+          req.fk_user,
+          req.fk_category ?? 1,
+          fk_schedule,
+          fk_store_sub_id,
+          req.image_url ?? null,
+        ],
+        { revalidate: false },
+      );
+    }
 
     // 4. Mark request as approved
     await queryD1(
