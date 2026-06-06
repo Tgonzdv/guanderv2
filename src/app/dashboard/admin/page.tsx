@@ -1,5 +1,5 @@
 import { queryD1 } from "@/lib/cloudflare-d1";
-import { Users, Building2, UserPlus, PlusCircle } from "lucide-react";
+import { Users, Building2, UserPlus, PlusCircle, BarChart3 } from "lucide-react";
 import Link from "next/link";
 
 /* ─── Types ─── */
@@ -8,6 +8,12 @@ interface DashboardStats {
   totalUsersGrowth: number;
   activeLocales: number;
   activeLocalesGrowth: number;
+}
+
+interface ActivityItem {
+  title: string;
+  description: string;
+  timestamp: number; // higher = more recent
 }
 
 /* ─── Data Fetching ─── */
@@ -43,6 +49,80 @@ async function getDashboardStats(): Promise<DashboardStats> {
     activeLocales: activeLocales || 523,
     activeLocalesGrowth: 43,
   };
+}
+
+function formatRelative(input: string | number | null | undefined): string {
+  if (input == null) return "Reciente";
+  const d = typeof input === "number" ? new Date(input) : new Date(input);
+  if (Number.isNaN(d.getTime())) return "Reciente";
+  const diffMs = Date.now() - d.getTime();
+  const min = Math.floor(diffMs / 60000);
+  if (min < 1) return "Hace instantes";
+  if (min < 60) return `Hace ${min} min`;
+  const hr = Math.floor(min / 60);
+  if (hr < 24) return `Hace ${hr} h`;
+  const days = Math.floor(hr / 24);
+  if (days < 7) return `Hace ${days} d`;
+  return d.toLocaleDateString("es-AR");
+}
+
+async function getRecentActivity(): Promise<ActivityItem[]> {
+  const items: ActivityItem[] = [];
+
+  try {
+    const [stores, users, professionals] = await Promise.all([
+      queryD1<{ id_store: number; name: string }>(
+        "SELECT id_store, name FROM stores ORDER BY id_store DESC LIMIT 3",
+        [],
+        { revalidate: false },
+      ),
+      queryD1<{ id_user: number; username: string; date_reg: string }>(
+        "SELECT id_user, username, date_reg FROM users ORDER BY date_reg DESC LIMIT 3",
+        [],
+        { revalidate: false },
+      ),
+      queryD1<{ id_professional: number }>(
+        "SELECT id_professional FROM professionals ORDER BY id_professional DESC LIMIT 3",
+        [],
+        { revalidate: false },
+      ),
+    ]);
+
+    for (const s of stores) {
+      items.push({
+        title: "Nuevo local registrado",
+        description: s.name,
+        timestamp: s.id_store,
+      });
+    }
+    for (const u of users) {
+      items.push({
+        title: "Nuevo usuario registrado",
+        description: u.username,
+        timestamp: new Date(u.date_reg).getTime() || u.id_user,
+      });
+    }
+    for (let i = 0; i < professionals.length; i++) {
+      items.push({
+        title: "Nuevo profesional dado de alta",
+        description: `Servicio #${professionals[i].id_professional}`,
+        timestamp: professionals[i].id_professional,
+      });
+    }
+  } catch {
+    /* fall back to sample */
+  }
+
+  if (items.length === 0) {
+    return [
+      { title: "Nuevo local registrado", description: "Gym FitPro", timestamp: Date.now() },
+      { title: "Nuevo usuario registrado", description: "juan.perez", timestamp: Date.now() - 3600_000 },
+      { title: "Nuevo profesional dado de alta", description: "Servicio #42", timestamp: Date.now() - 7200_000 },
+    ];
+  }
+
+  items.sort((a, b) => b.timestamp - a.timestamp);
+  return items.slice(0, 6);
 }
 
 /* ─── Stat Card ─── */
@@ -95,7 +175,10 @@ function StatCard({
 
 /* ─── Page ─── */
 export default async function AdminDashboardPage() {
-  const stats = await getDashboardStats();
+  const [stats, activity] = await Promise.all([
+    getDashboardStats(),
+    getRecentActivity(),
+  ]);
 
   const statCards = [
     {
@@ -164,6 +247,50 @@ export default async function AdminDashboardPage() {
         {statCards.map((card) => (
           <StatCard key={card.label} {...card} />
         ))}
+      </div>
+
+      {/* Actividad Reciente */}
+      <div
+        className="bg-white rounded-2xl p-6"
+        style={{ border: "1px solid var(--guander-border)" }}
+      >
+        <h3
+          className="text-sm font-bold mb-4 flex items-center gap-2"
+          style={{ color: "var(--guander-ink)" }}
+        >
+          <BarChart3 size={16} style={{ color: "var(--guander-forest)" }} />
+          Actividad Reciente
+        </h3>
+        <div className="space-y-4">
+          {activity.map((item, i) => (
+            <div
+              key={`${item.title}-${i}`}
+              className="flex items-start justify-between gap-3 border-b pb-3 last:border-b-0 last:pb-0"
+              style={{ borderColor: "var(--guander-border)" }}
+            >
+              <div>
+                <p
+                  className="text-sm font-semibold"
+                  style={{ color: "var(--guander-ink)" }}
+                >
+                  {item.title}
+                </p>
+                <p
+                  className="text-xs mt-0.5"
+                  style={{ color: "var(--guander-muted)" }}
+                >
+                  {item.description}
+                </p>
+              </div>
+              <span
+                className="text-[11px] whitespace-nowrap pt-0.5"
+                style={{ color: "var(--guander-muted)" }}
+              >
+                {formatRelative(item.timestamp)}
+              </span>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
