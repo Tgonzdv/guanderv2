@@ -54,15 +54,6 @@ export default async function LocalesPage() {
       { revalidate: false },
     );
 
-    const PLACEHOLDER_IMAGES = [
-      'https://placehold.co/400x200/1f4b3b/ffffff?text=Local+1',
-      'https://placehold.co/400x200/3d6b4f/ffffff?text=Local+2',
-      'https://placehold.co/400x200/7d8b6a/ffffff?text=Local+3',
-      'https://placehold.co/400x200/3d6b6b/ffffff?text=Local+4',
-      'https://placehold.co/400x200/173a2d/ffffff?text=Local+5',
-      'https://placehold.co/400x200/5a7a5a/ffffff?text=Local+6',
-    ];
-
     locales = stores.map((store, i) => ({
       id: store.id_store,
       name: store.name,
@@ -77,7 +68,7 @@ export default async function LocalesPage() {
       description: store.description ?? '',
       address: store.address ?? '',
       location: store.location ?? '',
-      image: store.image_url ?? PLACEHOLDER_IMAGES[i % PLACEHOLDER_IMAGES.length],
+      image: store.image_url ?? null,
       scheduleId: store.fk_schedule ?? null,
       scheduleWeek: store.week ?? '',
       scheduleWeekend: store.weekend ?? '',

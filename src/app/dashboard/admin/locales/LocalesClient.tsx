@@ -31,7 +31,7 @@ export interface LocaleItem {
   description: string;
   address: string;
   location: string;
-  image: string;
+  image: string | null;
   scheduleId: number | null;
   scheduleWeek: string;
   scheduleWeekend: string;
@@ -106,14 +106,56 @@ const DEFAULT_CATEGORIES: Category[] = [
   },
 ];
 
-const PLACEHOLDER_IMAGES = [
-  "https://placehold.co/400x200/1f4b3b/ffffff?text=Local+1",
-  "https://placehold.co/400x200/3d6b4f/ffffff?text=Local+2",
-  "https://placehold.co/400x200/7d8b6a/ffffff?text=Local+3",
-  "https://placehold.co/400x200/3d6b6b/ffffff?text=Local+4",
-  "https://placehold.co/400x200/173a2d/ffffff?text=Local+5",
-  "https://placehold.co/400x200/5a7a5a/ffffff?text=Local+6",
+const PLACEHOLDER_COLORS = [
+  "#1f4b3b",
+  "#3d6b4f",
+  "#7d8b6a",
+  "#3d6b6b",
+  "#173a2d",
+  "#5a7a5a",
 ];
+
+function colorForName(name: string): string {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = (hash * 31 + name.charCodeAt(i)) | 0;
+  }
+  const idx = Math.abs(hash) % PLACEHOLDER_COLORS.length;
+  return PLACEHOLDER_COLORS[idx];
+}
+
+function LocaleImage({
+  name,
+  image,
+  className,
+  textClassName = "text-3xl",
+}: {
+  name: string;
+  image: string | null;
+  className?: string;
+  textClassName?: string;
+}) {
+  if (image) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={image}
+        alt={name}
+        className={className ?? "w-full h-full object-cover"}
+      />
+    );
+  }
+  return (
+    <div
+      className={`w-full h-full flex items-center justify-center text-center px-4 ${className ?? ""}`}
+      style={{ backgroundColor: colorForName(name), color: "#ffffff" }}
+    >
+      <span className={`font-semibold leading-tight break-words ${textClassName}`}>
+        {name}
+      </span>
+    </div>
+  );
+}
 
 /* ─── Modal ─── */
 function Modal({
@@ -845,9 +887,7 @@ export default function LocalesClient({
         description: formDescription,
         address: formAddress,
         location: formLocation,
-        image:
-          imageUrl ||
-          PLACEHOLDER_IMAGES[locales.length % PLACEHOLDER_IMAGES.length],
+        image: imageUrl || null,
         scheduleId: null,
         scheduleWeek: formWeek,
         scheduleWeekend: formWeekend,
@@ -1335,12 +1375,7 @@ export default function LocalesClient({
                     className="relative h-36 overflow-hidden"
                     style={{ backgroundColor: "var(--guander-cream)" }}
                   >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={locale.image}
-                      alt={locale.name}
-                      className="w-full h-full object-cover"
-                    />
+                    <LocaleImage name={locale.name} image={locale.image} textClassName="text-2xl" />
                     <span
                       className="absolute top-3 right-3 text-[10px] font-bold px-2.5 py-1 rounded tracking-wide uppercase"
                       style={{
@@ -1460,12 +1495,7 @@ export default function LocalesClient({
               className="relative h-48 overflow-hidden rounded-t-2xl"
               style={{ backgroundColor: "var(--guander-cream)" }}
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={viewLocale.image}
-                alt={viewLocale.name}
-                className="w-full h-full object-cover"
-              />
+              <LocaleImage name={viewLocale.name} image={viewLocale.image} textClassName="text-3xl" />
               <button
                 onClick={() => setViewLocale(null)}
                 className="absolute top-3 right-3 w-8 h-8 bg-white/90 rounded-full flex items-center justify-center cursor-pointer hover:bg-white transition"
