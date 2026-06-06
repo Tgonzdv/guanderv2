@@ -107,15 +107,23 @@ export async function POST(request: NextRequest) {
   const address = toSafeText(body.address, 200);
   const location = toSafeText(body.location, 120);
   const typeServiceId = toPositiveInt(body.typeServiceId);
-  const scheduleId = toPositiveInt(body.scheduleId);
   const acceptPoint = body.acceptPoint ? 1 : 0;
 
-  if (!description || !typeServiceId || !scheduleId) {
+  if (!description || !typeServiceId) {
     return NextResponse.json(
-      { error: "description, typeServiceId y scheduleId son obligatorios" },
+      { error: "description y typeServiceId son obligatorios" },
       { status: 400 },
     );
   }
+
+  // El formulario ya no pide horario: usamos el primer schedule disponible
+  // para mantener NOT NULL en professionals.fk_schedule.
+  const defaultSchedule = await queryD1<{ id_schedule: number }>(
+    "SELECT id_schedule FROM schedule ORDER BY id_schedule ASC LIMIT 1",
+    [],
+    { revalidate: false },
+  );
+  const scheduleId = defaultSchedule[0]?.id_schedule ?? 1;
 
   await queryD1(
     `INSERT INTO professionals (
@@ -164,18 +172,17 @@ export async function PUT(request: NextRequest) {
   const address = toSafeText(body.address, 200);
   const location = toSafeText(body.location, 120);
   const typeServiceId = toPositiveInt(body.typeServiceId);
-  const scheduleId = toPositiveInt(body.scheduleId);
   const acceptPoint = body.acceptPoint ? 1 : 0;
 
-  if (!idProfessional || !description || !typeServiceId || !scheduleId) {
+  if (!idProfessional || !description || !typeServiceId) {
     return NextResponse.json(
-      { error: "idProfessional, description, typeServiceId y scheduleId son obligatorios" },
+      { error: "idProfessional, description y typeServiceId son obligatorios" },
       { status: 400 },
     );
   }
 
-  const existing = await queryD1<{ id_professional: number }>(
-    `SELECT id_professional
+  const existing = await queryD1<{ id_professional: number; fk_schedule: number }>(
+    `SELECT id_professional, fk_schedule
      FROM professionals
      WHERE id_professional = ?
        AND fk_store_sub_id = ?
@@ -190,6 +197,9 @@ export async function PUT(request: NextRequest) {
       { status: 404 },
     );
   }
+
+  // Mantener el fk_schedule que ya tenia el servicio (la UI ya no lo edita)
+  const scheduleId = existing[0].fk_schedule;
 
   await queryD1(
     `UPDATE professionals

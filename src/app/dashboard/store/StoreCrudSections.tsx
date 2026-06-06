@@ -51,13 +51,6 @@ type ServiceTypeOption = {
   name: string;
 };
 
-type ScheduleOption = {
-  id_schedule: number;
-  week: string;
-  weekend: string;
-  sunday: string;
-};
-
 type CouponServiceOption = {
   id_professional: number;
   service_name: string;
@@ -139,16 +132,12 @@ export function StoreServicesCrudSection({
     })),
   );
   const [serviceTypes, setServiceTypes] = useState<ServiceTypeOption[]>([]);
-  const [schedules, setSchedules] = useState<ScheduleOption[]>([]);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [pendingDeleteService, setPendingDeleteService] = useState<ServiceItem | null>(null);
 
   const [form, setForm] = useState({
     description: "",
-    address: "",
-    location: "",
     typeServiceId: "",
-    scheduleId: "",
     acceptPoint: true,
   });
 
@@ -163,7 +152,6 @@ export function StoreServicesCrudSection({
         data?: {
           services: ServiceItem[];
           serviceTypes: ServiceTypeOption[];
-          schedules: ScheduleOption[];
         };
       }>(res);
 
@@ -173,7 +161,6 @@ export function StoreServicesCrudSection({
 
       setServices(json.data.services);
       setServiceTypes(json.data.serviceTypes);
-      setSchedules(json.data.schedules);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al cargar servicios");
     } finally {
@@ -188,10 +175,7 @@ export function StoreServicesCrudSection({
   function resetForm() {
     setForm({
       description: "",
-      address: "",
-      location: "",
       typeServiceId: "",
-      scheduleId: "",
       acceptPoint: true,
     });
     setEditingId(null);
@@ -201,10 +185,7 @@ export function StoreServicesCrudSection({
     setError("");
     const payload = {
       description: form.description,
-      address: form.address,
-      location: form.location,
       typeServiceId: Number(form.typeServiceId),
-      scheduleId: Number(form.scheduleId),
       acceptPoint: form.acceptPoint,
       idProfessional: editingId ?? undefined,
     };
@@ -244,10 +225,7 @@ export function StoreServicesCrudSection({
     setEditingId(service.id_professional);
     setForm({
       description: service.description,
-      address: service.address,
-      location: service.location,
       typeServiceId: String(service.fk_type_service),
-      scheduleId: String(service.fk_schedule),
       acceptPoint: service.accept_point === 1,
     });
   }
@@ -305,20 +283,6 @@ export function StoreServicesCrudSection({
               fullWidth
               size="small"
             />
-            <TextField
-              label="Direccion"
-              value={form.address}
-              onChange={(e) => setForm((prev) => ({ ...prev, address: e.target.value }))}
-              fullWidth
-              size="small"
-            />
-            <TextField
-              label="Ubicacion"
-              value={form.location}
-              onChange={(e) => setForm((prev) => ({ ...prev, location: e.target.value }))}
-              fullWidth
-              size="small"
-            />
             <FormControl size="small" fullWidth>
               <InputLabel id="service-type-label">Tipo de servicio</InputLabel>
               <Select
@@ -330,21 +294,6 @@ export function StoreServicesCrudSection({
                 {serviceTypes.map((type) => (
                   <MenuItem key={type.id_type_service} value={String(type.id_type_service)}>
                     {type.name}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            <FormControl size="small" fullWidth>
-              <InputLabel id="schedule-label">Horario</InputLabel>
-              <Select
-                labelId="schedule-label"
-                value={form.scheduleId}
-                label="Horario"
-                onChange={(e) => setForm((prev) => ({ ...prev, scheduleId: e.target.value }))}
-              >
-                {schedules.map((schedule) => (
-                  <MenuItem key={schedule.id_schedule} value={String(schedule.id_schedule)}>
-                    {`Semana: ${schedule.week} | Sabado: ${schedule.weekend}`}
                   </MenuItem>
                 ))}
               </Select>
