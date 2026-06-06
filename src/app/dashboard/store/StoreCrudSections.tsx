@@ -1105,7 +1105,7 @@ export function StorePromotionsCrudSection({ initialItems }: { initialItems: Ben
   );
 }
 
-export function StoreCouponsCrudSection({ activeCoupons = [] }: { activeCoupons?: CouponRow[] }) {
+export function StoreCouponsCrudSection() {
   const [consumptionError, setConsumptionError] = useState("");
   const [qrDataUrl, setQrDataUrl] = useState("");
   const [selectedQrCode, setSelectedQrCode] = useState("");
@@ -1116,7 +1116,9 @@ export function StoreCouponsCrudSection({ activeCoupons = [] }: { activeCoupons?
   const [consumptionItems, setConsumptionItems] = useState<ConsumptionFormItem[]>([]);
   const [customerSummary, setCustomerSummary] = useState<{ name: string; email: string } | null>(null);
   const [selectedCoupon, setSelectedCoupon] = useState<CouponRow | null>(null);
-  const [liveCoupons, setLiveCoupons] = useState<CouponRow[]>(activeCoupons);
+  const [couponCodeInput, setCouponCodeInput] = useState("");
+  const [couponValidationError, setCouponValidationError] = useState("");
+  const [validatingCoupon, setValidatingCoupon] = useState(false);
 
   async function loadServiceOptions() {
     setConsumptionError("");
@@ -1141,29 +1143,8 @@ export function StoreCouponsCrudSection({ activeCoupons = [] }: { activeCoupons?
     setServiceOptions(deduped);
   }
 
-  async function loadLiveCoupons() {
-    try {
-      const res = await fetch("/api/store/coupons", { cache: "no-store" });
-      const json = await readJson<{
-        success?: boolean;
-        data?: { coupons: CouponRow[] };
-        error?: string;
-      }>(res);
-      if (res.ok && json.data) {
-        setLiveCoupons(
-          json.data.coupons.filter(
-            (c) => c.state === 1 && new Date(c.expiration_date) >= new Date(),
-          ),
-        );
-      }
-    } catch {
-      // silently keep server-provided fallback
-    }
-  }
-
   useEffect(() => {
     void loadServiceOptions();
-    void loadLiveCoupons();
   }, []);
 
   const selectedService = useMemo(() => {
@@ -1179,7 +1160,9 @@ export function StoreCouponsCrudSection({ activeCoupons = [] }: { activeCoupons?
       if (!item.acceptPoint) return acc;
       return acc + item.quantity * item.unitAmount;
     }, 0);
-    const couponDiscount = selectedCoupon ? Math.min(selectedCoupon.amount, subtotal) : 0;
+    const couponDiscount = selectedCoupon
+      ? Math.min(Number((subtotal * selectedCoupon.amount / 100).toFixed(2)), subtotal)
+      : 0;
     const discountedSubtotal = Number((subtotal - couponDiscount).toFixed(2));
     // Distribute discount proportionally over point-eligible items
     const pointEligibleAfterDiscount =
@@ -1240,6 +1223,70 @@ export function StoreCouponsCrudSection({ activeCoupons = [] }: { activeCoupons?
     setQrDataUrl("");
     setSelectedQrCode("");
     setSelectedCoupon(null);
+    setCouponCodeInput("");
+    setCouponValidationError("");
+  }
+
+  function clearSelectedCoupon() {
+    setSelectedCoupon(null);
+    setCouponCodeInput("");
+    setCouponValidationError("");
+  }
+
+  async function validateCouponCode() {
+    setCouponValidationError("");
+    const code = couponCodeInput.trim();
+    if (!code) {
+      setCouponValidationError("Ingresa un codigo de cupon");
+      return;
+    }
+
+    setValidatingCoupon(true);
+    try {
+      const res = await fetch("/api/store/coupons/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ codeCoupon: code }),
+      });
+      const json = await readJson<{
+        success?: boolean;
+        data?: {
+          id_coupon: number;
+          name: string;
+          description: string;
+          amount: number;
+          code_coupon: string;
+          expiration_date: string;
+        };
+        error?: string;
+      }>(res);
+
+      if (!res.ok || !json.data) {
+        setCouponValidationError(
+          json.error ?? "No se pudo validar el cupon. Intenta nuevamente.",
+        );
+        return;
+      }
+
+      setSelectedCoupon({
+        id_coupon: json.data.id_coupon,
+        name: json.data.name,
+        description: json.data.description,
+        expiration_date: json.data.expiration_date,
+        point_req: 0,
+        code_coupon: json.data.code_coupon,
+        amount: json.data.amount,
+        fk_coupon_state: 0,
+        state: 1,
+        coupon_state_name: null,
+        redemptions: 0,
+      });
+      setCouponCodeInput("");
+    } catch {
+      setCouponValidationError("No se pudo validar el cupon. Intenta nuevamente.");
+    } finally {
+      setValidatingCoupon(false);
+    }
   }
 
   async function generateConsumptionQr() {
@@ -1349,40 +1396,61 @@ export function StoreCouponsCrudSection({ activeCoupons = [] }: { activeCoupons?
             </Alert>
           )}
 
-          {liveCoupons.length > 0 && (
-            <Paper variant="outlined" sx={{ mt: 2, p: 1.5, borderColor: "#d6e4da", bgcolor: "#f8fcf9" }}>
-              <Typography variant="caption" sx={{ color: "#173a2d", fontWeight: 700, display: "block", mb: 0.6 }}>
-                Cupones de descuento del local — hacé clic para aplicar al consumo:
-              </Typography>
-              <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-                {liveCoupons.length === 0 ? (
-                  <Typography variant="caption" sx={{ color: "#5a7368" }}>Sin cupones activos</Typography>
-                ) : (
-                  liveCoupons.map((coupon) => {
-                    const isSelected = selectedCoupon?.id_coupon === coupon.id_coupon;
-                    return (
-                      <Chip
-                        key={coupon.id_coupon}
-                        label={`${coupon.name}  −${coupon.amount}%`}
-                        size="small"
-                        onClick={() => setSelectedCoupon(isSelected ? null : coupon)}
-                        variant={isSelected ? "filled" : "outlined"}
-                        sx={{
-                          cursor: "pointer",
-                          fontWeight: isSelected ? 700 : 400,
-                          bgcolor: isSelected ? "#1f4b3b" : "#deebdf",
-                          color: isSelected ? "#fff" : "#173a2d",
-                          borderColor: "#b8d1c0",
-                          "&:hover": { bgcolor: isSelected ? "#173a2d" : "#c8dece" },
-                        }}
-                      />
-                    );
-                  })
-                )}
+          {selectedCoupon ? (
+            <Paper
+              variant="outlined"
+              sx={{ mt: 2, p: 1.5, borderColor: "#b8d1c0", bgcolor: "#eef5f0" }}
+            >
+              <Stack direction={{ xs: "column", sm: "row" }} spacing={1.2} alignItems={{ sm: "center" }} justifyContent="space-between">
+                <Stack spacing={0.3}>
+                  <Typography variant="caption" sx={{ color: "#173a2d", fontWeight: 700, fontFamily: "monospace", letterSpacing: 0.4 }}>
+                    {selectedCoupon.code_coupon}
+                  </Typography>
+                  <Typography variant="caption" sx={{ color: "#1f4b3b", fontWeight: 700 }}>
+                    Cupón aplicado: {selectedCoupon.name} — {selectedCoupon.amount}% de descuento
+                  </Typography>
+                </Stack>
+                <Button variant="outlined" color="inherit" size="small" onClick={clearSelectedCoupon}>
+                  Quitar cupón
+                </Button>
               </Stack>
-              {selectedCoupon && (
-                <Typography variant="caption" sx={{ mt: 0.8, display: "block", color: "#1f4b3b", fontWeight: 700 }}>
-                  Cupón aplicado: {selectedCoupon.name} — descuento de {money(selectedCoupon.amount)} sobre el total
+            </Paper>
+          ) : (
+            <Paper
+              variant="outlined"
+              sx={{ mt: 2, p: 1.5, borderColor: "#d6e4da", bgcolor: "#f8fcf9" }}
+            >
+              <Typography variant="caption" sx={{ color: "#173a2d", fontWeight: 700, display: "block", mb: 0.8 }}>
+                Cupón de descuento (opcional)
+              </Typography>
+              <Stack direction={{ xs: "column", sm: "row" }} spacing={1} alignItems={{ sm: "center" }}>
+                <TextField
+                  size="small"
+                  fullWidth
+                  placeholder="GUANDER-XXXXXXXX"
+                  value={couponCodeInput}
+                  onChange={(e) => setCouponCodeInput(e.target.value.toUpperCase())}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      void validateCouponCode();
+                    }
+                  }}
+                  inputProps={{ style: { fontFamily: "monospace", letterSpacing: 0.5 } }}
+                  disabled={validatingCoupon}
+                />
+                <Button
+                  variant="contained"
+                  sx={{ bgcolor: "#1f4b3b", minWidth: 120 }}
+                  onClick={() => void validateCouponCode()}
+                  disabled={validatingCoupon || !couponCodeInput.trim()}
+                >
+                  {validatingCoupon ? <CircularProgress size={18} sx={{ color: "#fff" }} /> : "Validar"}
+                </Button>
+              </Stack>
+              {couponValidationError && (
+                <Typography variant="caption" sx={{ mt: 0.8, display: "block", color: "#c0392b" }}>
+                  {couponValidationError}
                 </Typography>
               )}
             </Paper>

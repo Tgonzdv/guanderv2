@@ -424,7 +424,7 @@ function PromotionsSection({ data }: { data: DashboardData }) {
 }
 
 function CouponsSection({ data }: { data: DashboardData }) {
-  return <StoreCouponsCrudSection activeCoupons={data.coupons} />;
+  return <StoreCouponsCrudSection />;
 }
 
 function ReviewsSection({ data }: { data: DashboardData }) {

@@ -57,16 +57,40 @@ export async function getStoreOwnerContext(): Promise<
 
   // For professionals: look up the professionals table too
   let professionalId: number | null = null;
+  let professionalSub: { id_professional: number; fk_store_sub_id: number; description: string } | null = null;
   if (user.role === "professional") {
-    const profRows = await queryD1<{ id_professional: number }>(
-      `SELECT id_professional FROM professionals WHERE fk_user_id = ? LIMIT 1`,
+    const profRows = await queryD1<{
+      id_professional: number;
+      fk_store_sub_id: number;
+      description: string;
+    }>(
+      `SELECT id_professional, fk_store_sub_id, description
+       FROM professionals WHERE fk_user_id = ? LIMIT 1`,
       [user.id],
       { revalidate: false },
     );
     professionalId = profRows[0]?.id_professional ?? null;
+    professionalSub = profRows[0] ?? null;
   }
 
   if (!store) {
+    // Si es profesional sin local propio, devolvemos contexto basado en
+    // la fila de professionals. storeId queda en 0 — las APIs que lo
+    // usen deben discriminar por rol.
+    if (user.role === "professional" && professionalSub) {
+      return {
+        ok: true,
+        context: {
+          userId: user.id,
+          role: "professional",
+          storeId: 0,
+          storeSubId: professionalSub.fk_store_sub_id,
+          storeName: professionalSub.description || "Profesional",
+          professionalId,
+        },
+      };
+    }
+
     return {
       ok: false,
       response: NextResponse.json(
