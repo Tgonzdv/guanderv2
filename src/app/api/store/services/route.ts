@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { queryD1 } from "@/lib/cloudflare-d1";
 import { getStoreOwnerContext } from "@/lib/store-owner-context";
+import { ensureTypeServiceNoDuplicates } from "@/lib/type-service-migrations";
 
 type ServiceInput = {
   idProfessional?: number;
@@ -65,10 +66,12 @@ export async function GET() {
       [context.storeSubId],
       { revalidate: false },
     ),
-    queryD1<{ id_type_service: number; name: string }>(
-      "SELECT id_type_service, name FROM type_service ORDER BY name ASC",
-      [],
-      { revalidate: false },
+    ensureTypeServiceNoDuplicates().then(() =>
+      queryD1<{ id_type_service: number; name: string }>(
+        "SELECT id_type_service, name FROM type_service ORDER BY name ASC",
+        [],
+        { revalidate: false },
+      ),
     ),
     queryD1<{ id_schedule: number; week: string; weekend: string; sunday: string }>(
       "SELECT id_schedule, week, weekend, sunday FROM schedule ORDER BY id_schedule ASC",

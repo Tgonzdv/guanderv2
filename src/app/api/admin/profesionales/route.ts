@@ -1,11 +1,13 @@
 ﻿import { NextResponse } from 'next/server';
 import { queryD1 } from '@/lib/cloudflare-d1';
 import { getAdminSession } from '@/lib/admin-auth';
+import { ensureTypeServiceNoDuplicates } from '@/lib/type-service-migrations';
 
 export async function GET() {
   const session = await getAdminSession();
   if (!session) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
   try {
+    await ensureTypeServiceNoDuplicates();
     const serviceTypes = await queryD1<{ id_type_service: number; name: string }>(
       'SELECT id_type_service, name FROM type_service ORDER BY name ASC',
       [],
