@@ -1271,12 +1271,10 @@ export function StoreCouponsCrudSection() {
       setSelectedCoupon({
         id_coupon: json.data.id_coupon,
         name: json.data.name,
-        description: json.data.description,
         expiration_date: json.data.expiration_date,
         point_req: 0,
         code_coupon: json.data.code_coupon,
         amount: json.data.amount,
-        fk_coupon_state: 0,
         state: 1,
         coupon_state_name: null,
         redemptions: 0,
