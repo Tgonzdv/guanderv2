@@ -1,16 +1,60 @@
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 import { queryD1 } from "@/lib/cloudflare-d1";
 import { getStoreOwnerContext } from "@/lib/store-owner-context";
+import { verifyToken } from "@/lib/auth";
 import { ensureSubPayoutTable, ensureStoreSubPayoutColumn, ensureSubPayoutColumns } from "@/lib/sub-payouts";
 
 export async function POST(request: Request) {
   try {
+    let storeSubId: number | null | undefined;
+    let userId: number | null | undefined;
+    let role: string | undefined;
+
     const authContext = await getStoreOwnerContext();
-    if (!authContext.ok) {
-      return authContext.response;
+    if (authContext.ok) {
+      storeSubId = authContext.context.storeSubId;
+      userId = authContext.context.userId;
+      role = authContext.context.role;
+    } else {
+      // Fallback: el contexto no se resolvio (ej. profesional sin fila
+      // asociada). Hacemos una busqueda directa a partir del token para
+      // no bloquear al usuario.
+      const token = (await cookies()).get("token")?.value;
+      const user = token ? verifyToken(token) : null;
+      role = user?.role;
+      userId = user?.id ?? null;
+
+      console.warn("[upload-payment-proof] storeOwnerContext fallo, usando fallback directo", {
+        userId,
+        role,
+      });
+
+      if (user) {
+        if (user.role === "professional") {
+          const profRows = await queryD1<{ fk_store_sub_id: number }>(
+            `SELECT fk_store_sub_id FROM professionals WHERE fk_user_id = ? LIMIT 1`,
+            [user.id],
+            { revalidate: false },
+          );
+          storeSubId = profRows[0]?.fk_store_sub_id ?? null;
+        } else {
+          const storeRows = await queryD1<{ fk_store_sub_id: number }>(
+            `SELECT fk_store_sub_id FROM stores WHERE fk_user = ? LIMIT 1`,
+            [user.id],
+            { revalidate: false },
+          );
+          storeSubId = storeRows[0]?.fk_store_sub_id ?? null;
+        }
+      }
     }
-    const { storeSubId, userId } = authContext.context;
-    
+
+    if (!userId) {
+      return authContext.ok
+        ? authContext.response
+        : NextResponse.json({ error: "No autenticado" }, { status: 401 });
+    }
+
     let base64File = "";
     let paymentAmount = 0;
     let paymentDate = new Date().toISOString().slice(0, 10);
