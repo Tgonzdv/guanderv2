@@ -298,7 +298,6 @@ export default function ProfesionalesClient({ initialProfessionals }: { initialP
   const [professionals, setProfessionals] = useState<ProfessionalItem[]>(initialProfessionals);
   const [serviceTypes, setServiceTypes] = useState<ServiceType[]>([]);
   const [search, setSearch] = useState("");
-  const [serviceFilter, setServiceFilter] = useState("Todos");
   const [viewProfessional, setViewProfessional] = useState<ProfessionalItem | null>(null);
   const [editProfessional, setEditProfessional] = useState<ProfessionalItem | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -358,11 +357,6 @@ export default function ProfesionalesClient({ initialProfessionals }: { initialP
     return () => clearTimeout(id);
   }, [formAddress, editProfessional]);
 
-  const availableServiceTypes = useMemo(() => {
-    const types = Array.from(new Set(professionals.map((p) => p.serviceType)));
-    return ["Todos", ...types];
-  }, [professionals]);
-
   const filtered = useMemo(() => {
     const term = search.toLowerCase().trim();
     return professionals.filter((p) => {
@@ -373,10 +367,9 @@ export default function ProfesionalesClient({ initialProfessionals }: { initialP
         p.serviceType.toLowerCase().includes(term) ||
         p.address.toLowerCase().includes(term) ||
         p.description.toLowerCase().includes(term);
-      const matchesService = serviceFilter === "Todos" || p.serviceType === serviceFilter;
-      return matchesSearch && matchesService;
+      return matchesSearch;
     });
-  }, [professionals, search, serviceFilter]);
+  }, [professionals, search]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / ITEMS_PER_PAGE));
   const safePage = Math.min(currentPage, totalPages);
@@ -493,8 +486,8 @@ export default function ProfesionalesClient({ initialProfessionals }: { initialP
         </div>
       </div>
 
-      {/* Search & filters */}
-      <div className="bg-white rounded-2xl p-4 space-y-3" style={{ border: "1px solid var(--guander-border)" }}>
+      {/* Search */}
+      <div className="bg-white rounded-2xl p-4" style={{ border: "1px solid var(--guander-border)" }}>
         <div className="relative">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: "var(--guander-muted)" }} />
           <input
@@ -505,22 +498,6 @@ export default function ProfesionalesClient({ initialProfessionals }: { initialP
             className="w-full pl-9 pr-4 py-2.5 rounded-xl text-sm outline-none"
             style={{ border: "1px solid var(--guander-border)", backgroundColor: "var(--guander-cream)", color: "var(--guander-ink)" }}
           />
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {availableServiceTypes.map((type) => (
-            <button
-              key={type}
-              onClick={() => { setServiceFilter(type); setCurrentPage(1); }}
-              className="px-3 py-1 rounded-full text-xs font-semibold transition cursor-pointer"
-              style={
-                serviceFilter === type
-                  ? { backgroundColor: "var(--guander-forest)", color: "#fff" }
-                  : { backgroundColor: "var(--guander-mint)", color: "var(--guander-ink)", border: "1px solid var(--guander-border)" }
-              }
-            >
-              {type}
-            </button>
-          ))}
         </div>
       </div>
 
