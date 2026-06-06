@@ -1,7 +1,7 @@
 import { queryD1 } from '@/lib/cloudflare-d1';
 import LocalesClient, { type LocaleItem } from './LocalesClient';
 
-const CATEGORY_LABELS: Record<number, string> = {
+const FALLBACK_CATEGORY_LABELS: Record<number, string> = {
   1: 'Veterinaria',
   2: 'Pet Shop',
   3: 'Cafetería',
@@ -44,36 +44,58 @@ export default async function LocalesPage() {
   let locales: LocaleItem[] = [];
 
   try {
-    const stores = await queryD1<StoreRow>(
-      `SELECT s.id_store, s.name, s.description, s.address, s.location, s.stars, s.fk_category, s.image_url, s.fk_schedule,
-              sch.week, sch.weekend, sch.sunday
-       FROM stores s
-       LEFT JOIN schedule sch ON sch.id_schedule = s.fk_schedule
-       ORDER BY s.id_store DESC`,
-      [],
-      { revalidate: false },
-    );
+    // Cargar categorias desde la DB para que el nombre en la lista
+    // coincida con el del modal (antes estaba hardcodeado y no
+    // encontraba categorias personalizadas como "Cafe Pet Friendly").
+    const [stores, categoryRows] = await Promise.all([
+      queryD1<StoreRow>(
+        `SELECT s.id_store, s.name, s.description, s.address, s.location, s.stars, s.fk_category, s.image_url, s.fk_schedule,
+                sch.week, sch.weekend, sch.sunday
+         FROM stores s
+         LEFT JOIN schedule sch ON sch.id_schedule = s.fk_schedule
+         ORDER BY s.id_store DESC`,
+        [],
+        { revalidate: false },
+      ),
+      queryD1<{ id_category: number; name: string }>(
+        `SELECT id_category, name FROM category`,
+        [],
+        { revalidate: false },
+      ),
+    ]);
 
-    locales = stores.map((store, i) => ({
-      id: store.id_store,
-      name: store.name,
-      email: `${slugify(store.name) || 'contacto'}@gmail.com`,
-      category: store.fk_category != null
-        ? (CATEGORY_LABELS[store.fk_category] ?? 'Sin categoría')
-        : 'Sin categoría',
-      categoryId: store.fk_category,
-      rating: store.stars,
-      favorites: ((store.id_store * 37) % 400) + 20,
-      type: inferType(store.stars, i),
-      description: store.description ?? '',
-      address: store.address ?? '',
-      location: store.location ?? '',
-      image: store.image_url ?? null,
-      scheduleId: store.fk_schedule ?? null,
-      scheduleWeek: store.week ?? '',
-      scheduleWeekend: store.weekend ?? '',
-      scheduleSunday: store.sunday ?? '',
-    }));
+    const categoryById = new Map<number, string>();
+    for (const cat of categoryRows) {
+      categoryById.set(cat.id_category, cat.name);
+    }
+
+    locales = stores.map((store, i) => {
+      const categoryName =
+        store.fk_category != null
+          ? categoryById.get(store.fk_category) ??
+            FALLBACK_CATEGORY_LABELS[store.fk_category] ??
+            'Sin categoría'
+          : 'Sin categoría';
+
+      return {
+        id: store.id_store,
+        name: store.name,
+        email: `${slugify(store.name) || 'contacto'}@gmail.com`,
+        category: categoryName,
+        categoryId: store.fk_category,
+        rating: store.stars,
+        favorites: ((store.id_store * 37) % 400) + 20,
+        type: inferType(store.stars, i),
+        description: store.description ?? '',
+        address: store.address ?? '',
+        location: store.location ?? '',
+        image: store.image_url ?? null,
+        scheduleId: store.fk_schedule ?? null,
+        scheduleWeek: store.week ?? '',
+        scheduleWeekend: store.weekend ?? '',
+        scheduleSunday: store.sunday ?? '',
+      };
+    });
   } catch {
     // Fallback sample data when D1 is unavailable
     locales = [
