@@ -1,8 +1,10 @@
 ﻿'use client';
 
 import { useState, useMemo, useRef, useCallback } from 'react';
-import { Search, Tag, X, CheckCircle, XCircle } from 'lucide-react';
+import { Search, Tag, X, CheckCircle, XCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { CouponRow } from '@/app/api/admin/coupons/route';
+
+const PAGE_SIZE = 10;
 
 /* --- Toast --- */
 interface ToastMsg { id: number; type: 'success' | 'error'; text: string; }
@@ -37,6 +39,7 @@ export default function CuponesClient({ initialCoupons }: { initialCoupons: Coup
   const [coupons] = useState<CouponRow[]>(initialCoupons);
   const [search, setSearch] = useState('');
   const [filterType, setFilterType] = useState<FilterType>('todos');
+  const [page, setPage] = useState(1);
   const { toasts, dismiss } = useToast();
 
   const filtered = useMemo(() => {
@@ -52,6 +55,13 @@ export default function CuponesClient({ initialCoupons }: { initialCoupons: Coup
       return matchType && matchSearch;
     });
   }, [coupons, search, filterType]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages);
+  const paged = useMemo(
+    () => filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE),
+    [filtered, safePage],
+  );
 
   function formatDate(d: string) {
     if (!d) return '-';
@@ -86,7 +96,10 @@ export default function CuponesClient({ initialCoupons }: { initialCoupons: Coup
             type="text"
             placeholder="Buscar por dueño, nombre o código..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(1);
+            }}
             className="w-full pl-9 pr-4 py-2.5 rounded-xl text-sm outline-none"
             style={{ border: '1px solid var(--guander-border)', color: 'var(--guander-ink)', background: 'white' }}
           />
@@ -97,7 +110,10 @@ export default function CuponesClient({ initialCoupons }: { initialCoupons: Coup
           {typeFilters.map((f) => (
             <button
               key={f.value}
-              onClick={() => setFilterType(f.value)}
+              onClick={() => {
+                setFilterType(f.value);
+                setPage(1);
+              }}
               className="px-3.5 py-2 rounded-xl text-sm font-medium transition cursor-pointer"
               style={
                 filterType === f.value
@@ -132,7 +148,7 @@ export default function CuponesClient({ initialCoupons }: { initialCoupons: Coup
               </tr>
             </thead>
             <tbody>
-              {filtered.length === 0 ? (
+              {paged.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="text-center py-12" style={{ color: 'var(--guander-muted)' }}>
                     <Tag size={32} className="mx-auto mb-2 opacity-40" />
@@ -140,11 +156,11 @@ export default function CuponesClient({ initialCoupons }: { initialCoupons: Coup
                   </td>
                 </tr>
               ) : (
-                filtered.map((c, i) => (
+                paged.map((c, i) => (
                   <tr
                     key={`${c.owner_type}-${c.id_coupon}`}
                     style={{
-                      borderBottom: i < filtered.length - 1 ? '1px solid var(--guander-border)' : 'none',
+                      borderBottom: i < paged.length - 1 ? '1px solid var(--guander-border)' : 'none',
                     }}
                     className="hover:bg-[#f5f9f7] transition-colors"
                   >
@@ -208,6 +224,36 @@ export default function CuponesClient({ initialCoupons }: { initialCoupons: Coup
           </table>
         </div>
       </div>
+
+      {/* Paginación */}
+      {filtered.length > 0 && (
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <p className="text-xs" style={{ color: 'var(--guander-muted)' }}>
+            Mostrando {(safePage - 1) * PAGE_SIZE + 1}–{Math.min(safePage * PAGE_SIZE, filtered.length)} de {filtered.length}
+          </p>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={safePage <= 1}
+              className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-medium transition disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+              style={{ border: '1px solid var(--guander-border)', color: 'var(--guander-ink)', background: 'white' }}
+            >
+              <ChevronLeft size={14} /> Anterior
+            </button>
+            <span className="text-sm" style={{ color: 'var(--guander-ink)' }}>
+              Página {safePage} de {totalPages}
+            </span>
+            <button
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={safePage >= totalPages}
+              className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-medium transition disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+              style={{ border: '1px solid var(--guander-border)', color: 'var(--guander-ink)', background: 'white' }}
+            >
+              Siguiente <ChevronRight size={14} />
+            </button>
+          </div>
+        </div>
+      )}
 
       <ToastContainer toasts={toasts} dismiss={dismiss} />
     </div>
