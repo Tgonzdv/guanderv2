@@ -320,6 +320,10 @@ function StoresMap({
   }
 
   if (points.length === 0) {
+    // Si el padre ya filtro a 0 locales, no es un error de coordenadas:
+    // el mensaje "No encontramos locales con esos filtros" se muestra
+    // abajo y alcanza con no pintar nada aca.
+    if (locations.length === 0) return null;
     return (
       <Alert severity="warning" sx={{ borderRadius: 3 }}>
         No se encontraron coordenadas válidas para mostrar los locales en el mapa.
