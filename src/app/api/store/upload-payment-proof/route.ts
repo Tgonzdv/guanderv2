@@ -50,9 +50,7 @@ export async function POST(request: Request) {
     }
 
     if (!userId) {
-      return authContext.ok
-        ? authContext.response
-        : NextResponse.json({ error: "No autenticado" }, { status: 401 });
+      return NextResponse.json({ error: "No autenticado" }, { status: 401 });
     }
 
     let base64File = "";
