@@ -196,7 +196,7 @@ const SCHEDULE_PRESETS = [
 
 type PendingPlan = { id: number; name: string; amount: number };
 
-export default function OnboardingRequestForm() {
+export default function OnboardingRequestForm({ userRole }: { userRole?: "store_owner" | "professional" } = {}) {
   const [categories, setCategories] = useState<Category[]>([]);
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [pendingPlan, setPendingPlan] = useState<PendingPlan | null>(null);
@@ -412,10 +412,14 @@ export default function OnboardingRequestForm() {
               </Typography>
               <Typography variant="body2" color="#4b675b">
                 {status === "success" && !req
-                  ? "Un administrador revisará tus datos y creará tu local. Te avisaremos por email."
+                  ? userRole === "professional"
+                    ? "Un administrador revisará tus datos y creará tu perfil profesional. Te avisaremos por email."
+                    : "Un administrador revisará tus datos y creará tu local. Te avisaremos por email."
                   : isPending
                     ? "Tu solicitud está siendo revisada por el equipo de Guander."
-                    : "Tu local fue creado. Actualizá la página para verlo."}
+                    : userRole === "professional"
+                      ? "Tu perfil fue creado. Actualizá la página para verlo."
+                      : "Tu local fue creado. Actualizá la página para verlo."}
               </Typography>
               {(status === "success" && !req) || isPending ? (
                 <Button

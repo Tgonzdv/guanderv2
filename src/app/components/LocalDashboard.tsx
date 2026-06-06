@@ -57,9 +57,80 @@ async function loadDashboardData(userId: number): Promise<DashboardData | null> 
     { revalidate: false }
   );
 
-  const store = stores[0];
+  let store = stores[0];
   if (!store) {
-    return null;
+    // Si el usuario no tiene un local propio, puede ser un profesional
+    // aprobado (la solicitud de alta crea fila en professionals, no en
+    // stores). Construimos un StoreSummaryRow sintetico con id_store=0
+    // (los queries de cupones/comentarios daran vacio, esta bien) y los
+    // datos de plan/suscripcion del store_sub que comparten.
+    const profs = await queryD1<{
+      id_professional: number;
+      fk_store_sub_id: number;
+      fk_user_id: number;
+      stars: number;
+      description: string;
+      address: string;
+      location: string;
+      name: string;
+      last_name: string;
+      plan_name: string | null;
+      plan_amount: number | null;
+      plan_benefits: string | null;
+      plan_state: string | null;
+      plan_expiration_date: string | null;
+      payout_state: string | null;
+    }>(
+      `SELECT
+         p.id_professional,
+         p.fk_store_sub_id,
+         p.fk_user_id,
+         p.stars,
+         p.description,
+         p.address,
+         p.location,
+         ud.name AS name,
+         ud.last_name AS last_name,
+         sub.name AS plan_name,
+         sub.amount AS plan_amount,
+         sub.plan_benefits AS plan_benefits,
+         sub.state AS plan_state,
+         ss.expiration_date AS plan_expiration_date,
+         ss.state_payout AS payout_state
+       FROM professionals p
+       INNER JOIN users u ON u.id_user = p.fk_user_id
+       INNER JOIN user_data ud ON ud.id_user_data = u.fk_user_data
+       LEFT JOIN store_sub ss ON ss.id_store_sub = p.fk_store_sub_id
+       LEFT JOIN subscription sub ON sub.id_subscription = ss.fk_subscription_id
+       WHERE p.fk_user_id = ?
+       ORDER BY p.id_professional DESC
+       LIMIT 1`,
+      [userId],
+      { revalidate: false }
+    );
+
+    const prof = profs[0];
+    if (!prof) {
+      return null;
+    }
+
+    store = {
+      id_store: 0,
+      name: `${prof.name} ${prof.last_name}`.trim() || "Profesional",
+      description: prof.description,
+      address: prof.address,
+      location: prof.location,
+      stars: prof.stars,
+      fk_user: prof.fk_user_id,
+      fk_store_sub_id: prof.fk_store_sub_id,
+      category_name: null,
+      plan_name: prof.plan_name,
+      plan_amount: prof.plan_amount,
+      plan_benefits: prof.plan_benefits,
+      plan_state: prof.plan_state,
+      plan_expiration_date: prof.plan_expiration_date,
+      payout_state: prof.payout_state,
+    };
   }
 
   const [
@@ -304,7 +375,7 @@ export default async function LocalDashboard() {
   }
 
   if (!data) {
-    return <OnboardingRequestForm />;
+    return <OnboardingRequestForm userRole={user.role as "store_owner" | "professional"} />;
   }
 
   return <LocalDashboardClient data={data} error={null} userRole={user.role} />;
